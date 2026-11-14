@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Networking Lab – Interactive Network Simulator</title>
+<style>
+:root{--bg:#eef3f1;--panel:#fff;--ink:#17302b;--mute:#5d726d;--line:#c9d8d3;--teal:#0f766e;--amber:#b87503;--red:#b8321f;--green:#1b7a3d}
+@media (prefers-color-scheme:dark){:root{--bg:#10201d;--panel:#182b27;--ink:#e6f0ed;--mute:#9bb2ac;--line:#2f4742;--teal:#3fc0b3;--amber:#e3a13a;--red:#ef7a66;--green:#5fcf84}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 "Segoe UI",system-ui,sans-serif}
+header{padding:28px 24px 8px;max-width:1200px;margin:auto}
+h1{margin:0;font:700 2rem/1.2 Georgia,serif}
+header p{margin:6px 0 0;color:var(--mute);max-width:70ch}
+main{max-width:1200px;margin:auto;padding:16px 24px 40px;display:grid;grid-template-columns:1fr 320px;gap:16px}
+@media (max-width:900px){main{grid-template-columns:1fr}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px}
+h2{font:600 1.05rem Georgia,serif;margin:0 0 8px}
+.bar{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
+button,select,input{font:inherit;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:6px 10px}
+button{cursor:pointer}
+button:hover{border-color:var(--teal)}
+button.on,button.primary{background:var(--teal);border-color:var(--teal);color:#fff}
+button.danger{color:var(--red)}
+:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
+svg{width:100%;height:auto;display:block;background:var(--bg);border:1px dashed var(--line);border-radius:8px;touch-action:none}
+.dev{cursor:grab}
+.dev text{fill:var(--ink);font-size:13px;text-anchor:middle;pointer-events:none}
+.dev .ip{fill:var(--mute);font-size:11px}
+.shape{fill:var(--panel);stroke:var(--teal);stroke-width:2.5}
+.dev.sel .shape{stroke:var(--amber);stroke-width:4}
+.dev.off .shape{stroke:var(--red);stroke-dasharray:5 3;opacity:.6}
+.link{stroke:var(--teal);stroke-width:3}
+.link.down{stroke:var(--red);stroke-dasharray:6 5}
+.hit{stroke:transparent;stroke-width:14;cursor:pointer}
+.pkt{fill:var(--amber);stroke:var(--ink);stroke-width:1}
+.row{display:flex;gap:8px;align-items:center;margin:6px 0}
+.row label{min-width:78px;color:var(--mute);font-size:.9rem}
+.row input,.row select{flex:1;min-width:0}
+dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:4px 10px;font-size:.95rem}
+dt{color:var(--mute)}dd{margin:0}
+#result{margin-top:10px;padding:10px;border-radius:8px;border-left:6px solid var(--line);background:var(--bg)}
+#result.ok{border-color:var(--green)}#result.fail{border-color:var(--red)}
+#log{list-style:none;margin:0;padding:0;max-height:200px;overflow:auto;font-size:.9rem}
+#log li{padding:4px 0;border-bottom:1px solid var(--line)}
+#log .ok{color:var(--green)}#log .fail{color:var(--red)}#log .info{color:var(--mute)}
+.hint{color:var(--mute);font-size:.88rem;margin:8px 0 0}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:.85rem;color:var(--mute);margin-top:8px}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+<header>
+  <h1>Networking Lab: Interactive Network Simulator</h1>
+  <p>Build a small network, cut a cable, change an address, and watch what happens when one computer sends data to another.</p>
+</header>
+<main>
+  <section class="card" aria-label="Network canvas">
+    <h2>Network topology</h2>
+    <div class="bar">
+      <button id="bConnect" aria-pressed="false">Connect devices</button>
+      <select id="addType" aria-label="Device type"><option value="pc">Computer</option><option value="switch">Switch</option><option value="router">Router</option></select>
+      <button id="bAdd">Add device</button>
+      <button id="bReset">Reset network</button>
+    </div>
+    <svg id="svg" viewBox="0 0 900 480" role="img" aria-label="Network topology diagram"></svg>
+    <div class="legend"><span>Teal line: cable connected</span><span>Red dashed line: cable cut</span><span>Dashed device: powered off</span><span>Drag devices to move them. Click a cable to cut or restore it.</span></div>
+    <p class="hint" id="modeHint"></p>
+  </section>
+
+  <aside style="display:grid;gap:16px;align-content:start">
+    <section class="card" aria-live="polite">
+      <h2>Selected device</h2>
+      <div id="info"><p class="hint">Click a device to see its details.</p></div>
+    </section>
+    <section class="card">
+      <h2>Send data</h2>
+      <div class="row"><label for="src">From</label><select id="src"></select></div>
+      <div class="row"><label for="dst">To</label><select id="dst"></select></div>
+      <button class="primary" id="bSend">Send packet</button>
+      <div id="result" role="status">No packet sent yet.</div>
+    </section>
+    <section class="card">
+      <h2>Event log</h2>
+      <ul id="log"></ul>
+    </section>
+  </aside>
+</main>
+
+<script>
+const NS="http://www.w3.org/2000/svg";
+const FUNC={pc:"End device. Sends and receives data.",switch:"Layer 2 device. Forwards frames between devices on the same network using MAC addresses.",router:"Layer 3 device. Connects different networks and routes packets using IP addresses."};
+let devs,links,sel=null,connectMode=false,pending=null,nextId=1,busy=false;
+const $=id=>document.getElementById(id), svg=$("svg");
+
+function reset(){
+  nextId=1;sel=null;pending=null;
+  devs=[mk("pc","PC-1","192.168.1.10",120,100),mk("pc","PC-2","192.168.1.11",120,380),mk("pc","PC-3","192.168.1.12",420,400),
+        mk("switch","Switch-1","",420,230),mk("router","Router-1","192.168.1.1",730,230)];
+  links=[];
+  [[0,3],[1,3],[2,3],[3,4]].forEach(([a,b])=>links.push({a:devs[a].id,b:devs[b].id,up:true}));
+  log("Network reset. 3 computers, 1 switch, 1 router.","info");
+  draw();
+}
+function mk(type,name,ip,x,y){return{id:nextId++,type,name,ip,x,y,on:true}}
+const get=id=>devs.find(d=>d.id===id);
+function log(t,c){const li=document.createElement("li");li.className=c||"info";li.textContent=t;$("log").prepend(li)}
+
+function el(n,a,p){const e=document.createElementNS(NS,n);for(const k in a)e.setAttribute(k,a[k]);(p||svg).appendChild(e);return e}
+function draw(){
+  svg.innerHTML="";
+  links.forEach(l=>{
+    const A=get(l.a),B=get(l.b);
+    const g=el("g",{});
+    el("line",{x1:A.x,y1:A.y,x2:B.x,y2:B.y,class:"link"+(l.up?"":" down")},g);
+    const h=el("line",{x1:A.x,y1:A.y,x2:B.x,y2:B.y,class:"hit",tabindex:0,role:"button","aria-label":`Cable between ${A.name} and ${B.name}, ${l.up?"connected":"cut"}. Press Enter to toggle.`},g);
+    const tog=()=>{l.up=!l.up;log(`Cable ${A.name} – ${B.name} ${l.up?"restored":"cut"}.`,l.up?"info":"fail");draw()};
+    h.onclick=tog;h.onkeydown=e=>{if(e.key==="Enter")tog()};
+  });
+  devs.forEach(d=>{
+    const g=el("g",{class:"dev"+(sel===d.id?" sel":"")+(d.on?"":" off"),transform:`translate(${d.x},${d.y})`,tabindex:0,role:"button","aria-label":`${d.name}, ${d.type}`});
+    if(d.type==="pc"){el("rect",{x:-30,y:-24,width:60,height:40,rx:4,class:"shape"},g);el("rect",{x:-14,y:18,width:28,height:6,class:"shape"},g)}
+    else if(d.type==="switch"){el("rect",{x:-46,y:-16,width:92,height:32,rx:4,class:"shape"},g);[-30,-15,0,15,30].forEach(x=>el("rect",{x:x-4,y:-6,width:8,height:10,fill:"var(--teal)"},g))}
+    else{el("circle",{r:28,class:"shape"},g);el("path",{d:"M-14 0H14M8 -6L14 0L8 6M14 -10L-14 -10M-8 -16L-14 -10L-8 -4",fill:"none",stroke:"var(--teal)","stroke-width":2.5},g)}
+    const t=el("text",{y:46},g);t.textContent=d.name;
+    const i=el("text",{y:61,class:"ip"},g);i.textContent=d.ip||"no IP (Layer 2)";
+    g.onkeydown=e=>{if(e.key==="Enter")click(d)};
+    drag(g,d);
+  });
+  refreshSelects();showInfo();
+  $("bConnect").className=connectMode?"on":"";$("bConnect").setAttribute("aria-pressed",connectMode);
+  $("modeHint").textContent=connectMode?(pending?`Now click the device to connect to ${get(pending).name}.`:"Connect mode: click two devices to join them with a cable."):"";
+}
+function pt(e){const r=svg.getBoundingClientRect();return{x:(e.clientX-r.left)*900/r.width,y:(e.clientY-r.top)*480/r.height}}
+function drag(g,d){
+  let moved=false,start=null;
+  g.onpointerdown=e=>{start=pt(e);moved=false;g.setPointerCapture(e.pointerId)};
+  g.onpointermove=e=>{if(!start)return;const p=pt(e);if(Math.abs(p.x-start.x)+Math.abs(p.y-start.y)>4)moved=true;
+    if(moved){d.x=Math.max(50,Math.min(850,p.x));d.y=Math.max(40,Math.min(400,p.y));g.setAttribute("transform",`translate(${d.x},${d.y})`);
+      svg.querySelectorAll("g").forEach(()=>{});redrawLinesOnly()}};
+  g.onpointerup=()=>{start=null;if(!moved)click(d);else draw()};
+}
+function redrawLinesOnly(){
+  const ls=svg.querySelectorAll("g:not(.dev)");let i=0;
+  links.forEach(l=>{const A=get(l.a),B=get(l.b);ls[i++].querySelectorAll("line").forEach(n=>{n.setAttribute("x1",A.x);n.setAttribute("y1",A.y);n.setAttribute("x2",B.x);n.setAttribute("y2",B.y)})});
+}
+function click(d){
+  if(connectMode){
+    if(!pending){pending=d.id}
+    else if(pending===d.id){pending=null}
+    else if(links.some(l=>(l.a===pending&&l.b===d.id)||(l.b===pending&&l.a===d.id))){log("Those devices are already connected.","fail");pending=null}
+    else{links.push({a:pending,b:d.id,up:true});log(`Cable added: ${get(pending).name} – ${d.name}.`,"ok");pending=null}
+  }
+  sel=d.id;draw();
+}
+
+function showInfo(){
+  const d=get(sel),box=$("info");
+  if(!d){box.innerHTML='<p class="hint">Click a device to see its details.</p>';return}
+  const conns=links.filter(l=>l.a===d.id||l.b===d.id).map(l=>{const o=get(l.a===d.id?l.b:l.a);return o.name+(l.up?"":" (cut)")});
+  box.innerHTML=`<dl><dt>Name</dt><dd></dd><dt>Type</dt><dd>${d.type==="pc"?"Computer":d.type[0].toUpperCase()+d.type.slice(1)}</dd>
+  <dt>IP address</dt><dd>${d.ip||"None (Layer 2 device)"}</dd><dt>Status</dt><dd>${d.on?"Powered on":"Powered off"}</dd>
+  <dt>Function</dt><dd>${FUNC[d.type]}</dd><dt>Cables</dt><dd>${conns.join(", ")||"None"}</dd></dl>
+  <div class="row"><label for="eName">Rename</label><input id="eName" value="${d.name.replace(/"/g,"&quot;")}"></div>
+  ${d.type!=="switch"?`<div class="row"><label for="eIp">IP address</label><input id="eIp" value="${d.ip}"></div>`:""}
+  <div class="bar"><button id="bApply">Apply changes</button><button id="bPower">${d.on?"Power off":"Power on"}</button><button id="bDel" class="danger">Remove</button></div>`;
+  box.querySelector("dd").textContent=d.name;
+  $("bApply").onclick=()=>{const n=$("eName").value.trim();if(n)d.name=n;
+    if($("eIp")){const v=$("eIp").value.trim();if(v&&!validIp(v)){log(`"${v}" is not a valid IPv4 address.`,"fail");return}d.ip=v;log(`${d.name} IP set to ${v||"none"}.`,"info")}draw()};
+  $("bPower").onclick=()=>{d.on=!d.on;log(`${d.name} powered ${d.on?"on":"off"}.`,d.on?"info":"fail");draw()};
+  $("bDel").onclick=()=>{devs=devs.filter(x=>x!==d);links=links.filter(l=>l.a!==d.id&&l.b!==d.id);sel=null;log(`${d.name} removed.`,"info");draw()};
+}
+const validIp=s=>/^(\d{1,3}\.){3}\d{1,3}$/.test(s)&&s.split(".").every(n=>+n<=255);
+
+$("bConnect").onclick=()=>{connectMode=!connectMode;pending=null;draw()};
+$("bAdd").onclick=()=>{
+  const t=$("addType").value,n=devs.filter(d=>d.type===t).length+1;
+  const name={pc:"PC",switch:"Switch",router:"Router"}[t]+"-"+n;
+  const ip=t==="pc"?"192.168.1."+(20+n):t==="router"?"192.168.2.1":"";
+  const d=mk(t,name,ip,450+Math.random()*60,60+Math.random()*40);devs.push(d);sel=d.id;
+  log(`${name} added. Use Connect devices to cable it.`,"info");draw();
+};
+$("bReset").onclick=reset;
+
+function refreshSelects(){
+  const c=devs.filter(d=>d.type!=="switch");
+  [["src",0],["dst",1]].forEach(([id,k])=>{const s=$(id),v=s.value;
+    s.innerHTML=c.map(d=>`<option value="${d.id}">${d.name}${d.ip?" ("+d.ip+")":""}</option>`).join("");
+    s.value=v&&c.some(d=>d.id==v)?v:(c[k]?c[k].id:"")});
+}
+
+function findPath(a,b){
+  const q=[[a]],seen=new Set([a]);
+  while(q.length){const p=q.shift(),cur=p[p.length-1];if(cur===b)return p;
+    links.filter(l=>l.up&&(l.a===cur||l.b===cur)).forEach(l=>{const n=l.a===cur?l.b:l.a;
+      if(!seen.has(n)&&get(n).on){seen.add(n);q.push([...p,n])}})}
+  return null;
+}
+const net=ip=>ip.split(".").slice(0,3).join(".");
+function result(ok,msg){const r=$("result");r.className=ok?"ok":"fail";r.textContent=(ok?"Success: ":"Failed: ")+msg;log((ok?"Success: ":"Failed: ")+msg,ok?"ok":"fail")}
+
+$("bSend").onclick=()=>{
+  if(busy)return;
+  const s=get(+$("src").value),d=get(+$("dst").value);
+  if(!s||!d)return result(false,"Choose a source and a destination.");
+  if(s===d)return result(false,"Source and destination are the same device. Choose a different destination.");
+  if(!s.on)return result(false,`${s.name} is powered off. Power it on in the device panel.`);
+  if(!d.on)return result(false,`${d.name} is powered off, so it cannot receive data.`);
+  if(!validIp(s.ip))return result(false,`${s.name} has no valid IP address. Set one in the device panel.`);
+  if(!validIp(d.ip))return result(false,`${d.name} has no valid IP address, so the packet has no destination.`);
+  const dup=devs.find(x=>x!==s&&x.ip===s.ip)||devs.find(x=>x!==d&&x.ip===d.ip);
+  if(dup)return result(false,`IP conflict: ${dup.name} uses the same address as another device. Give each device a unique IP.`);
+  const path=findPath(s.id,d.id);
+  if(!path){
+    const hasLink=links.some(l=>l.a===s.id||l.b===s.id);
+    const why=!hasLink?`${s.name} has no cable connected.`:"No working path exists. Check for cut cables, powered-off devices, or missing connections.";
+    return result(false,`${s.name} cannot reach ${d.name}. ${why}`);
+  }
+  const crossesRouter=path.some(id=>get(id).type==="router"&&id!==s.id&&id!==d.id);
+  if(net(s.ip)!==net(d.ip)&&!crossesRouter&&d.type!=="router")
+    return result(false,`${s.name} (${net(s.ip)}.x) and ${d.name} (${net(d.ip)}.x) are on different networks and no router connects them. Check the IP addresses or add a router.`);
+  if(net(s.ip)!==net(d.ip)&&crossesRouter&&net(get(path.find(id=>get(id).type==="router")).ip||"")!==net(s.ip))
+    return result(false,`The router is not on ${s.name}'s network (${net(s.ip)}.x), so ${s.name} cannot use it as a gateway.`);
+  animate(path,()=>result(true,`${s.name} → ${d.name} delivered through ${path.map(id=>get(id).name).join(" → ")}.`));
+};
+
+function animate(path,done){
+  busy=true;let i=0;
+  const p=el("circle",{r:8,class:"pkt",cx:get(path[0]).x,cy:get(path[0]).y});
+  function seg(){
+    if(i>=path.length-1){setTimeout(()=>{p.remove();busy=false;done()},150);return}
+    const A=get(path[i]),B=get(path[i+1]),t0=performance.now(),dur=550;
+    (function f(t){const k=Math.min(1,(t-t0)/dur);p.setAttribute("cx",A.x+(B.x-A.x)*k);p.setAttribute("cy",A.y+(B.y-A.y)*k);
+      if(k<1)requestAnimationFrame(f);else{i++;seg()}})(t0);
+  }
+  seg();
+}
+reset();
+</script>
+</body>
+</html>
