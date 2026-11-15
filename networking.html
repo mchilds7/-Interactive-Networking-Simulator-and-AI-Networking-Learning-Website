@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Networking Lab – Interactive Network Simulator</title>
 <style>
-:root{--bg:#eef3f1;--panel:#fff;--ink:#17302b;--mute:#5d726d;--line:#c9d8d3;--teal:#0f766e;--amber:#b87503;--red:#b8321f;--green:#1b7a3d}
-@media (prefers-color-scheme:dark){:root{--bg:#10201d;--panel:#182b27;--ink:#e6f0ed;--mute:#9bb2ac;--line:#2f4742;--teal:#3fc0b3;--amber:#e3a13a;--red:#ef7a66;--green:#5fcf84}}
+:root{--bg:#eef3f1;--panel:#fff;--ink:#17302b;--mute:#5d726d;--line:#c9d8d3;--teal:#0f766e;--amber:#b87503;--red:#b8321f;--green:#1b7a3d;--on:#fff}
+@media (prefers-color-scheme:dark){:root{--bg:#10201d;--panel:#182b27;--ink:#e6f0ed;--mute:#9bb2ac;--line:#2f4742;--teal:#3fc0b3;--amber:#e3a13a;--red:#ef7a66;--green:#5fcf84;--on:#10201d}}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 "Segoe UI",system-ui,sans-serif}
 header{padding:28px 24px 8px;max-width:1200px;margin:auto}
@@ -20,7 +20,7 @@ h2{font:600 1.05rem Georgia,serif;margin:0 0 8px}
 button,select,input{font:inherit;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:6px 10px}
 button{cursor:pointer}
 button:hover{border-color:var(--teal)}
-button.on,button.primary{background:var(--teal);border-color:var(--teal);color:#fff}
+button.on,button.primary{background:var(--teal);border-color:var(--teal);color:var(--on)}
 button.danger{color:var(--red)}
 :focus-visible{outline:3px solid var(--amber);outline-offset:2px}
 svg{width:100%;height:auto;display:block;background:var(--bg);border:1px dashed var(--line);border-radius:8px;touch-action:none}
@@ -46,12 +46,33 @@ dt{color:var(--mute)}dd{margin:0}
 #log .ok{color:var(--green)}#log .fail{color:var(--red)}#log .info{color:var(--mute)}
 .hint{color:var(--mute);font-size:.88rem;margin:8px 0 0}
 .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:.85rem;color:var(--mute);margin-top:8px}
+.vnode{cursor:default}.vnode.hot .shape{stroke:var(--amber);stroke-width:5}
+.pk rect{fill:var(--teal)}.pk text{fill:var(--on);font-size:11px;text-anchor:middle;font-weight:600}
+.vgrid{display:grid;grid-template-columns:250px 1fr;gap:16px;margin-top:12px}
+@media (max-width:900px){.vgrid{grid-template-columns:1fr}}
+#vsteps{margin:0;padding-left:22px}#vsteps li{padding:4px 8px;border-radius:6px;color:var(--mute)}
+#vsteps li.act{background:var(--teal);color:var(--on);font-weight:600}#vsteps li.done{color:var(--ink)}
+#vexp{background:var(--bg);border-left:6px solid var(--teal);border-radius:8px;padding:12px;min-height:90px}
+.bar label{display:inline-flex;gap:6px;align-items:center}
+.t3grid{display:grid;grid-template-columns:270px 1fr;gap:16px}
+@media (max-width:900px){.t3grid{grid-template-columns:1fr}}
+.t3l{display:block;width:100%;text-align:left;margin-bottom:8px;padding:10px 12px;border-left:8px solid var(--teal)}
+.t3l small{display:block;color:var(--mute)}.t3l.on small{color:var(--on)}
+#t3detail{background:var(--bg);border-radius:8px;padding:14px;min-height:250px}
+#t3detail h3{margin:0 0 6px;font:600 1.15rem Georgia,serif}#t3detail h4{margin:12px 0 4px;font-size:.95rem;color:var(--mute)}
+#t3detail ul{margin:0;padding-left:20px}
+.chip{display:inline-block;margin:2px 4px 2px 0;padding:2px 10px;border:1px solid var(--teal);border-radius:99px;font-size:.9rem;background:var(--panel)}
+.enc{display:flex;gap:4px;flex-wrap:wrap;margin:8px 0}
+.enc span{padding:6px 10px;border:2px solid var(--teal);border-radius:6px;font-size:.85rem;background:var(--panel)}
+.enc span.d{background:var(--teal);color:var(--on)}
+#t3web{background:var(--bg);border-left:6px solid var(--amber);border-radius:8px;padding:12px;margin-top:8px;min-height:84px}
 @media (prefers-reduced-motion:reduce){*{scroll-behavior:auto}}
 </style>
 </head>
 <body>
 <header>
   <h1>Networking Lab: Interactive Network Simulator</h1>
+  <p style="font-size:.8rem;margin:0 0 4px;color:var(--mute)">Version: Components 1, 2 and 3</p>
   <p>Build a small network, cut a cable, change an address, and watch what happens when one computer sends data to another.</p>
 </header>
 <main>
@@ -85,6 +106,42 @@ dt{color:var(--mute)}dd{margin:0}
       <ul id="log"></ul>
     </section>
   </aside>
+  <section class="card" style="grid-column:1/-1" aria-label="Packet visualization">
+    <h2>Packet visualization</h2>
+    <p class="hint" style="margin:0 0 10px">Pick two computers and watch a message become packets, cross the network, and get rebuilt. It uses the network you built above, so cutting a cable there changes the route here.</p>
+    <div class="bar">
+      <label>From <select id="vsrc"></select></label>
+      <label>To <select id="vdst"></select></label>
+      <label>Message <input id="vmsg" value="Hello, network!" maxlength="40"></label>
+      <button class="primary" id="vStart">Start</button>
+      <button id="vPause" disabled>Pause</button>
+      <button id="vReset">Reset</button>
+    </div>
+    <svg id="vsvg" viewBox="0 0 900 260" role="img" aria-label="Packets travelling between devices"></svg>
+    <div class="vgrid">
+      <ol id="vsteps"></ol>
+      <div id="vexp" role="status" aria-live="polite"></div>
+    </div>
+  </section>
+  <section class="card" style="grid-column:1/-1" aria-label="TCP/IP model">
+    <h2>Interactive TCP/IP model</h2>
+    <p class="hint" style="margin:0 0 10px">Click a layer to see what it does. Use the buttons below to watch data move down the layers on the sending computer and back up on the receiving one.</p>
+    <div class="t3grid">
+      <div id="t3stack" role="group" aria-label="TCP/IP layers"></div>
+      <div id="t3detail" aria-live="polite"></div>
+    </div>
+    <h2 style="margin-top:16px">How data moves through the layers</h2>
+    <div class="bar">
+      <button class="primary" id="t3down">Send: down the layers</button>
+      <button id="t3up">Receive: up the layers</button>
+    </div>
+    <p class="hint" id="t3msg" style="margin:0"></p>
+    <div class="enc" id="t3enc" aria-label="What the data looks like at the selected layer"></div>
+    <h2 style="margin-top:16px">Example: visiting a website</h2>
+    <p class="hint" style="margin:0 0 8px">What happens when you type <strong>https://example.com</strong> into your browser.</p>
+    <div class="bar"><button id="t3prev">Previous</button><button class="primary" id="t3next">Next step</button><span class="hint" id="t3count" style="align-self:center;margin:0"></span></div>
+    <div id="t3web" aria-live="polite"></div>
+  </section>
 </main>
 
 <script>
@@ -182,7 +239,7 @@ $("bAdd").onclick=()=>{
 };
 $("bReset").onclick=reset;
 
-function refreshSelects(){
+function refreshSelects(){vFill();
   const c=devs.filter(d=>d.type!=="switch");
   [["src",0],["dst",1]].forEach(([id,k])=>{const s=$(id),v=s.value;
     s.innerHTML=c.map(d=>`<option value="${d.id}">${d.name}${d.ip?" ("+d.ip+")":""}</option>`).join("");
@@ -235,7 +292,142 @@ function animate(path,done){
   }
   seg();
 }
-reset();
+
+/* ---------- Component 2: Packet visualization ---------- */
+const vsvg=$("vsvg");
+const VSTEPS=["Source generates the data","Data is divided into packets","Packets travel the local network","Router forwards packets between networks","Destination receives the packets","Destination processes the data"];
+let vz={run:0,paused:false,running:false},vn=[];
+$("vsteps").innerHTML=VSTEPS.map(t=>`<li>${t}</li>`).join("");
+function vstep(i,t){document.querySelectorAll("#vsteps li").forEach((li,j)=>li.className=j===i?"act":j<i?"done":"");$("vexp").textContent=t}
+function vFill(){const c=devs.filter(d=>d.type==="pc");
+  [["vsrc",0],["vdst",1]].forEach(([id,k])=>{const x=$(id),v=x.value;
+    x.innerHTML=c.map(d=>`<option value="${d.id}">${d.name} (${d.ip||"no IP"})</option>`).join("");
+    x.value=v&&c.some(d=>d.id==v)?v:(c[k]?c[k].id:"")})}
+function vtween(dur,fn){return new Promise((res,rej)=>{let t=0,last=performance.now();const my=vz.run;
+  (function f(now){if(vz.run!==my)return rej();if(!vz.paused)t+=now-last;last=now;const k=Math.min(1,t/dur);fn(k);k<1?requestAnimationFrame(f):res()})(last)})}
+const vwait=ms=>vtween(ms,()=>{});
+const vmove=(q,a,b,dur)=>vtween(dur,k=>q.setAttribute("transform",`translate(${a[0]+(b[0]-a[0])*k},${a[1]+(b[1]-a[1])*k})`));
+function vpkt(label,x,y,w){const g=el("g",{class:"pk",transform:`translate(${x},${y})`},vsvg);
+  el("rect",{x:-w/2,y:-11,width:w,height:22,rx:4},g);const t=el("text",{y:4},g);t.textContent=label;return g}
+function vt(x,y,txt){const t=el("text",{x,y,"text-anchor":"middle","font-size":12,fill:"var(--ink)"},vsvg);t.textContent=txt;return t}
+function vui(){$("vPause").disabled=!vz.running;$("vPause").textContent=vz.paused?"Resume":"Pause";$("vStart").disabled=vz.running&&!vz.paused}
+function vplan(){
+  const s=get(+$("vsrc").value),d=get(+$("vdst").value);
+  if(!s||!d||s===d)return{err:"Choose two different computers."};
+  if(!validIp(s.ip)||!validIp(d.ip))return{err:"Both computers need a valid IP address. Set them in the simulator above."};
+  const p=findPath(s.id,d.id);
+  if(!p)return{err:`No working path from ${s.name} to ${d.name}. Reconnect the cable or power on the device in the simulator above.`};
+  const cross=net(s.ip)!==net(d.ip);
+  if(cross&&!p.some(id=>get(id).type==="router"))return{err:`${s.name} and ${d.name} are on different networks and no router is on the path. Add or connect a router, or fix the IP addresses.`};
+  return{s,d,p,cross};
+}
+function vdraw(){
+  vsvg.innerHTML="";vn=[];
+  const pl=vplan();if(pl.err){vstep(-1,pl.err);return}
+  const p=pl.p,n=p.length,xs=p.map((_,i)=>60+i*780/(n-1)),y=90;
+  for(let i=0;i<n-1;i++)el("line",{x1:xs[i],y1:y,x2:xs[i+1],y2:y,class:"link"},vsvg);
+  p.forEach((id,i)=>{const dv=get(id),g=el("g",{class:"dev vnode",transform:`translate(${xs[i]},${y})`},vsvg);
+    if(dv.type==="router")el("circle",{r:26,class:"shape"},g);
+    else el("rect",{x:dv.type==="switch"?-42:-28,y:-20,width:dv.type==="switch"?84:56,height:40,rx:4,class:"shape"},g);
+    const role=i===0?"Source computer":i===n-1?"Destination computer":dv.type==="switch"?"Switch: forwards by MAC":dv.type==="router"?"Router: forwards by IP":"Passes data along";
+    [[dv.name,46,""],[dv.ip||"no IP",61,"ip"],[role,78,"ip"]].forEach(([t,yy,c])=>{const e=el("text",{y:yy-0,class:c},g);e.textContent=t});
+    vn.push({x:xs[i],y,g})});
+  vstep(-1,"Choose two computers and press Start. The devices on the route appear above, left to right.");
+}
+function vreset(){vz.run++;vz.running=false;vz.paused=false;vui();vdraw()}
+async function vrun(){
+  const pl=vplan();if(pl.err){vdraw();return}
+  vz.run++;vz.paused=false;vz.running=true;vui();vdraw();
+  const{s,d,p,cross}=pl,n=p.length,msg=$("vmsg").value.trim()||"Hello";
+  const sz=Math.ceil(msg.length/4),ch=[0,1,2,3].map(i=>msg.slice(i*sz,(i+1)*sz)).filter(Boolean),m=ch.length;
+  const pos=(i,k)=>[vn[k].x+(i-(m-1)/2)*34,vn[k].y],nm=k=>get(p[k]).name;
+  const hot=(k,on)=>vn[k].g.classList.toggle("hot",on),hasR=p.some(id=>get(id).type==="router");
+  try{
+    hot(0,true);
+    vstep(0,`${s.name} creates the message "${msg}". An application on ${s.name} wants to send this data to ${d.name} (${d.ip}).`);
+    const data=vpkt(`"${msg}"`,vn[0].x,vn[0].y-62,Math.max(70,msg.length*8+16));
+    await vwait(2400);data.remove();
+    vstep(1,`The data is too big to send in one piece, so ${s.name} splits it into ${m} packets. Each packet gets a header with the source IP (${s.ip}), the destination IP (${d.ip}) and a sequence number, so the packets can be put back in order later.`);
+    const pk=ch.map((c,i)=>{const[x,y]=pos(i,0);return vpkt("P"+(i+1),x,y,30)});
+    await vwait(3000);hot(0,false);
+    let lvl=2;
+    for(let k=0;k<n-1;k++){
+      vstep(lvl,`The packets leave ${nm(k)} for ${nm(k+1)} over the cable, one after another.`);
+      await Promise.all(pk.map((q,i)=>vwait(i*200).then(()=>vmove(q,pos(i,k),pos(i,k+1),900))));
+      if(k+1<n-1){
+        const nd=get(p[k+1]);hot(k+1,true);
+        if(nd.type==="router"){lvl=3;vstep(3,cross
+          ?`${nd.name} is a router. It reads the destination IP (${d.ip}), sees it belongs to another network, checks its routing table, and forwards each packet toward ${nm(k+2)}. Routers connect different networks.`
+          :`${nd.name} is a router. ${d.ip} is on the same network (${net(d.ip)}.x), so it just forwards the packets toward ${nm(k+2)}. Routers are only required when the destination is on another network.`)}
+        else if(nd.type==="switch")vstep(lvl,`${nd.name} is a switch. It reads the destination MAC address of each frame and sends it only out the port that leads to ${nm(k+2)}, instead of to every device. Switches connect devices on the same network.`);
+        else vstep(lvl,`${nd.name} passes the packets along toward ${nm(k+2)}.`);
+        await vwait(3200);hot(k+1,false);
+      }
+    }
+    if(!hasR){vstep(3,"No router is needed here: both computers are on the same network, so the switch delivers the packets directly.");await vwait(2600)}
+    vstep(4,`${d.name} receives the packets. They can arrive out of order, so each one is checked and stored in a receive buffer by its sequence number.`);
+    hot(n-1,true);
+    const dx=vn[n-1].x,by=vn[n-1].y+120;
+    await Promise.all(pk.map((q,i)=>vwait(i*350).then(async()=>{const bx=dx+(i-(m-1)/2)*74;await vmove(q,pos(i,n-1),[bx,by],700);vt(bx,by+26,`"${ch[i]}"`)})));
+    await vwait(2200);
+    vstep(5,`${d.name} reads the sequence numbers, puts the pieces back in order, and hands the finished data to the application. The message "${msg}" has arrived. Press Reset to run it again.`);
+    vpkt(`Received: "${msg}"`,dx,vn[n-1].y-62,Math.max(110,msg.length*8+90));
+    vz.running=false;vui();
+  }catch(e){if(e)console.error(e)}
+}
+$("vStart").onclick=()=>{if(vz.running){if(vz.paused){vz.paused=false;vui()}}else vrun()};
+$("vPause").onclick=()=>{vz.paused=!vz.paused;vui()};
+$("vReset").onclick=vreset;
+$("vsrc").onchange=$("vdst").onchange=vreset;
+
+/* ---------- Component 3: Interactive TCP/IP model ---------- */
+const T3=[
+ {n:"Application",num:4,pdu:"Data (messages)",d:"The layer users and programs interact with. It provides network services to applications such as browsers and email clients.",
+  r:["Defines how applications ask for and send data","Handles things like web pages, email, file transfer and name lookups","Formats and (with TLS) can encrypt the data before it goes down"],
+  p:["HTTP / HTTPS","DNS","SMTP","IMAP","FTP","SSH","DHCP"],ex:"Web browser, email app, file-transfer tool"},
+ {n:"Transport",num:3,pdu:"Segments (TCP) or datagrams (UDP)",d:"Provides communication between programs on two computers. It splits data into pieces and decides how reliably they are delivered.",
+  r:["Splits data into segments and numbers them","Uses port numbers to reach the right program (for example 443 for HTTPS)","TCP: reliable, resends lost segments and keeps order. UDP: fast, no guarantees","Controls the flow so a fast sender does not overwhelm a slow receiver"],
+  p:["TCP","UDP"],ex:"Port 443 for secure web, port 25 for email, UDP for video calls and DNS"},
+ {n:"Internet",num:2,pdu:"Packets",d:"Moves packets across different networks from the source computer to the destination, using logical IP addresses.",
+  r:["Adds source and destination IP addresses","Chooses the path (routing) between networks","Breaks packets up if a link needs smaller pieces","Reports problems such as an unreachable host"],
+  p:["IP (IPv4, IPv6)","ICMP (ping)","ARP","IPsec"],ex:"Routers work at this layer"},
+ {n:"Network Access",num:1,pdu:"Frames and bits",d:"Delivers data across one physical link, such as Ethernet cable or Wi-Fi, between devices on the same local network.",
+  r:["Adds MAC addresses so the next device on the link knows it is the receiver","Checks frames for errors","Turns data into electrical, light or radio signals","Controls how devices share the cable or wireless channel"],
+  p:["Ethernet","Wi-Fi (802.11)","PPP","Network card drivers"],ex:"Network cards, cables and switches work at this layer"}
+];
+const ENC=[["Data"],["TCP header","Data"],["IP header","TCP header","Data"],["Frame header","IP header","TCP header","Data","Frame trailer"]];
+let t3sel=0,t3run=0,t3step=0;
+$("t3stack").innerHTML=T3.map((l,i)=>`<button class="t3l" data-i="${i}" aria-pressed="false">Layer ${l.num}: ${l.n}<small>${l.pdu}</small></button>`).join("");
+document.querySelectorAll(".t3l").forEach(b=>b.onclick=()=>{t3run++;$("t3msg").textContent="";t3pick(+b.dataset.i)});
+function t3pick(i){
+  t3sel=i;const l=T3[i];
+  document.querySelectorAll(".t3l").forEach((b,j)=>{b.classList.toggle("on",j===i);b.setAttribute("aria-pressed",j===i)});
+  $("t3detail").innerHTML=`<h3>Layer ${l.num}: ${l.n}</h3><p style="margin:0">${l.d}</p><h4>Responsibilities</h4><ul>${l.r.map(x=>`<li>${x}</li>`).join("")}</ul>
+   <h4>Example protocols</h4><div>${l.p.map(x=>`<span class="chip">${x}</span>`).join("")}</div><h4>Data unit</h4><p style="margin:0">${l.pdu}</p><h4>In practice</h4><p style="margin:0">${l.ex}</p>`;
+  $("t3enc").innerHTML=ENC[i].map(x=>`<span class="${x==="Data"?"d":""}">${x}</span>`).join("");
+}
+async function t3go(down){
+  const my=++t3run,order=down?[0,1,2,3]:[3,2,1,0];
+  const msg=down?["Application: the program creates the data.","Transport: a TCP header is added (ports and sequence numbers).","Internet: an IP header is added (source and destination IP).","Network Access: a frame header and trailer are added (MAC addresses and error check). The frame is sent as signals."]
+                :["Network Access: the frame arrives. The frame header and trailer are checked and removed.","Internet: the IP header is checked (is this packet for me?) and removed.","Transport: TCP reorders the segments, checks for gaps, and removes its header.","Application: the finished data is given to the program, such as the web browser."];
+  for(let k=0;k<4;k++){if(t3run!==my)return;t3pick(order[k]);$("t3msg").textContent=(down?"Sending, step ":"Receiving, step ")+(k+1)+" of 4. "+msg[k];await new Promise(r=>setTimeout(r,2200))}
+}
+$("t3down").onclick=()=>t3go(true);$("t3up").onclick=()=>t3go(false);
+const WEB=[
+ [0,"You type https://example.com and press Enter. The browser first asks DNS (an application-layer protocol) to turn the name example.com into an IP address. Then it prepares an HTTPS request: \"GET me the home page.\""],
+ [1,"TCP sets up a connection with the web server (the three-way handshake) and the data is secured with TLS. The request is placed in numbered TCP segments, sent from a random port on your computer to port 443 on the server."],
+ [2,"IP adds a header with your computer's IP address as the source and the server's IP address as the destination. Routers along the way read only this header to decide where to send each packet next."],
+ [3,"Your network card wraps the packet in a frame addressed to the MAC address of your home router, which is the next hop on your local network, and sends it over Wi-Fi or Ethernet as signals."],
+ [3,"The frame travels hop by hop. At each router the frame is opened, the IP header is read, and a new frame is built for the next link. Switches on the way forward frames using MAC addresses."],
+ [0,"The server's layers unwrap the data going up (frame, IP, TCP, then the web server program). The server sends the HTML page back down its layers and across the internet, your computer unwraps it going up, and the browser displays the page."]
+];
+function t3web(){const[w,t]=WEB[t3step];t3pick(w);$("t3web").textContent=`Step ${t3step+1}: ${t}`;$("t3count").textContent=`Step ${t3step+1} of ${WEB.length}`;
+  $("t3prev").disabled=t3step===0;$("t3next").disabled=t3step===WEB.length-1}
+$("t3prev").onclick=()=>{t3run++;$("t3msg").textContent="";t3step--;t3web()};
+$("t3next").onclick=()=>{t3run++;$("t3msg").textContent="";t3step++;t3web()};
+t3web();t3pick(0);
+$("t3web").textContent=`Step 1: ${WEB[0][1]}`;
+reset();vreset();
 </script>
 </body>
 </html>
