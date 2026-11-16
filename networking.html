@@ -75,13 +75,21 @@ dt{color:var(--mute)}dd{margin:0}
 #qfb.ok{border-color:var(--green)}#qfb.no{border-color:var(--red)}
 #qq{font:600 1.15rem Georgia,serif;margin:4px 0 6px}
 .qtag{display:inline-block;font-size:.8rem;color:var(--mute);border:1px solid var(--line);border-radius:99px;padding:1px 10px}
+#chat{height:360px;overflow:auto;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:12px;display:flex;flex-direction:column;gap:10px;margin-bottom:8px}
+.msg{max-width:88%;padding:10px 12px;border-radius:12px}
+.msg.u{align-self:flex-end;background:var(--teal);color:var(--on)}
+.msg.b{align-self:flex-start;background:var(--panel);border:1px solid var(--line)}
+.msg p{margin:0 0 6px}.msg p:last-of-type{margin:0}
+.msg .who{display:block;font-size:.75rem;opacity:.8;margin-bottom:2px}
+.msg .rel{margin-top:8px;font-size:.85rem;color:var(--mute)}.msg .rel button{margin:3px 4px 0 0;padding:1px 10px;border-radius:99px;cursor:pointer}
+.sug button{margin:0 6px 6px 0;border-radius:99px;font-size:.88rem}
 @media (prefers-reduced-motion:reduce){*{scroll-behavior:auto}}
 </style>
 </head>
 <body>
 <header>
   <h1>Networking Lab: Interactive Network Simulator</h1>
-  <p style="font-size:.8rem;margin:0 0 4px;color:var(--mute)">Version: Components 1, 2, 3 and 4</p>
+  <p style="font-size:.8rem;margin:0 0 4px;color:var(--mute)">Version: Components 1 to 5</p>
   <p>Build a small network, cut a cable, change an address, and watch what happens when one computer sends data to another.</p>
 </header>
 <main>
@@ -154,6 +162,14 @@ dt{color:var(--mute)}dd{margin:0}
   <section class="card" style="grid-column:1/-1" aria-label="Networking quiz">
     <h2>Networking quiz</h2>
     <div id="qbox"></div>
+  </section>
+  <section class="card" style="grid-column:1/-1" aria-label="AI networking chatbot">
+    <h2>Networking assistant (chatbot)</h2>
+    <p class="hint" style="margin:0 0 10px">Ask about LANs, WANs, Wi-Fi, topologies, devices, TCP/IP, IP addresses, DNS, TCP/UDP, packets, or troubleshooting. It can also look at the network you built in the simulator, for example: "Why can't PC-1 reach PC-3?"</p>
+    <div id="chat" role="log" aria-live="polite" aria-label="Chat messages"></div>
+    <div class="sug" id="csug" aria-label="Suggested questions"></div>
+    <div class="row"><input id="cin" placeholder="Ask a networking question…" aria-label="Your question" autocomplete="off" maxlength="300"><button class="primary" id="csend">Send</button></div>
+    <div class="bar" style="margin-top:8px"><button id="ctest">Run test questions</button><button id="cclear">Clear chat</button></div>
   </section>
 </main>
 
@@ -491,6 +507,156 @@ function qanswer(i){
   $("qnext").hidden=false;$("qnext").focus();
 }
 qstart();
+
+/* ---------- Component 5: Networking chatbot ---------- */
+/* Optional: set to the URL of YOUR OWN server/proxy that talks to an AI service. Never put an API key in this file. */
+const CHAT_API_URL="";
+/*CHAT-ENGINE-START*/
+const KB=[
+["network","Computer networks","computer network|what is a network|networking","A computer network is a group of devices, such as computers, phones, printers and servers, connected so they can exchange data and share resources. Devices are linked by cables or wireless signals, and networking devices like switches and routers direct the traffic.","Example: your home network connects your laptop, phone and TV to each other and, through your router, to the internet.","lan,wan,topology","Build one yourself in the simulator with PCs, a switch and a router."],
+["lan","LAN (Local Area Network)","lan|local area network","A LAN connects devices in a small area such as a home, classroom or office. It is usually owned and managed by one person or organization, offers high speeds, and is built with switches, Ethernet cables and Wi-Fi access points.","Example: all the computers in a school lab form a LAN.","wan,ethernet,wifi,switch","The PCs, switch and router in the simulator form a LAN."],
+["wan","WAN (Wide Area Network)","wan|wide area network","A WAN connects networks over a large geographic area, such as different cities or countries, usually using links leased from telecom providers. It is slower and costlier than a LAN, and the internet is the largest WAN.","Example: a company linking its offices in New York and London.","lan,router,ip",""],
+["wifi","Wi-Fi","wi-fi|wifi|wireless|802.11","Wi-Fi is wireless networking that uses radio waves (2.4, 5 or 6 GHz bands) to connect devices to a LAN through a wireless access point or router. It is convenient and mobile, but speed and reliability drop with distance, walls and interference, and it must be encrypted with WPA2 or WPA3 to be secure.","","ethernet,accesspoint,security",""],
+["ethernet","Ethernet","ethernet|cat5|cat6|twisted pair|rj45|wired","Ethernet is the standard for wired LANs. Devices connect with twisted-pair cables (Cat5e or Cat6) to a switch, and data travels as frames addressed by MAC address. Speeds range from 100 Mbps to 10 Gbps or more, and a wired link is typically faster, more stable and lower-latency than Wi-Fi.","","wifi,switch,mac",""],
+["topology","Network topologies","topolog*|network layout","A network topology is the layout of how devices are connected. Physical topology is the actual cabling, while logical topology is how data flows. The common types are star, bus, ring, mesh and tree or hybrid, and each trades off cost, reliability and how easy faults are to fix.","","star,bus,ring,mesh,tree","The simulator's starting network is a star around the switch."],
+["star","Star topology","star topology|star network|star","In a star topology every device connects to a central device, usually a switch. It is easy to add devices and one failed cable only affects one device, but if the central switch fails the whole network goes down. Most modern LANs use it.","Analogy: the spokes of a wheel meeting at the hub.","topology,switch",""],
+["bus","Bus topology","bus topology|bus network|bus","A bus topology uses one shared backbone cable that all devices tap into. It needs little cable and is cheap, but a break in the backbone splits the network, performance drops as devices are added, and faults are hard to find. It is rarely used today.","","topology,star",""],
+["ring","Ring topology","ring topology|ring network|ring|token ring","In a ring topology each device connects to exactly two neighbours, forming a loop, and data travels around it in one direction or both in a dual ring. Traffic is orderly, but one break can interrupt the whole ring unless it is a dual ring.","","topology,mesh",""],
+["mesh","Mesh topology","mesh topology|mesh network|mesh","In a mesh topology devices have multiple links to each other, and in a full mesh every device connects to every other one. It is very reliable because traffic can reroute around failures, but it needs many cables and is expensive. The internet itself is a partial mesh.","","topology,router",""],
+["tree","Tree and hybrid topology","tree topology|hybrid topology|tree|hybrid","A tree or hierarchical topology links several star networks together through a backbone, and a hybrid topology mixes two or more types. It scales well for large organizations, for example one switch per floor linked to a core switch, but the backbone becomes a critical point.","","topology,star",""],
+["router","Routers","router|routing|routing table|next hop","A router connects different networks and forwards packets between them by reading the destination IP address and choosing the best next hop from its routing table. Your home router connects your LAN to your internet provider and usually also provides DHCP, NAT, a firewall and Wi-Fi.","Analogy: a router is like a post office sorting centre that decides which road each parcel takes next.","switch,gateway,nat,ip","A PC on a different network can only be reached through a router."],
+["switch","Switches","switch|switching|mac table","A switch connects devices within one LAN. It learns which MAC address is on which port and forwards each frame only to the correct port, which avoids the collisions and wasted traffic a hub creates. It works mainly at the Network Access layer (Layer 2).","Analogy: a switch is like a receptionist who knows which desk everyone sits at and delivers each message directly.","router,hub,mac","The switch is what lets the PCs talk to each other."],
+["hub","Hubs","hub|repeater","A hub is an older, simple device that copies every incoming signal to all of its ports. It does not know who the receiver is, so the bandwidth is shared, collisions are common and security is weak. Switches have replaced hubs.","","switch",""],
+["accesspoint","Wireless access points","access point|wireless access point|extender","A wireless access point lets Wi-Fi devices join a wired network. Many home routers have one built in, and in larger buildings several access points are cabled to switches and share the same network name so people can roam.","","wifi,ethernet",""],
+["modem","Modems and ISPs","modem|isp|internet service provider","A modem converts the signal on your internet provider's line (cable, fibre or DSL) into digital data your network can use, and back again. The router then shares that single connection with all your devices, and many providers supply one box that does both jobs.","","router,wan",""],
+["firewall","Firewalls","firewall","A firewall filters network traffic using rules, allowing or blocking it by address, port or protocol. It can be software on a computer or a feature of your router, and it blocks unsolicited connections from the internet while allowing the traffic you asked for.","","security,router,ports",""],
+["nic","Network interface cards","nic|network card|network adapter|network interface","A network interface card (NIC) is the hardware, wired or wireless, that connects a device to a network. Each NIC has a unique MAC address and turns data into the signals sent over the cable or radio.","","mac,ethernet",""],
+["gateway","Default gateway","gateway|default gateway","A default gateway is the router address a device sends traffic to when the destination is outside its own network. If a computer has the wrong gateway it can reach local devices but not the internet.","","router,ip,subnet",""],
+["tcpip","TCP/IP model","tcp/ip|tcp ip|layers|four layers|layer model|osi","The TCP/IP model describes networking in four layers. From the top they are Application (HTTP, DNS, SMTP), Transport (TCP, UDP), Internet (IP, ICMP) and Network Access (Ethernet, Wi-Fi). Data moves down the layers on the sender, gaining a header at each one, and back up on the receiver. The OSI model describes the same ideas using seven layers.","","application,transport,internetl,link","Open the Interactive TCP/IP model section and click each layer."],
+["application","Application layer","application layer","The Application layer is where network services meet programs. Protocols here include HTTP and HTTPS for the web, DNS for names, SMTP and IMAP for email, FTP for file transfer and DHCP for automatic addressing.","","tcpip,http,dns",""],
+["transport","Transport layer","transport layer|segment","The Transport layer carries data between programs on two hosts. It splits data into segments, uses port numbers to find the right program, and uses TCP when delivery must be reliable or UDP when speed matters more.","","tcp,udp,ports",""],
+["internetl","Internet layer","internet layer|network layer|layer 3","The Internet layer addresses and routes packets. IP adds source and destination IP addresses and routers use them to move packets across networks. ICMP, used by ping, reports errors at this layer.","","ip,router,icmp",""],
+["link","Network Access layer","network access layer|link layer|data link|physical layer|layer 2","The Network Access (link) layer moves frames across a single physical link. It uses MAC addresses, error checking and the physical signals of Ethernet or Wi-Fi, and switches and network cards work here.","","ethernet,mac,switch",""],
+["http","HTTP","http|web server|web page|browser","HTTP is the Application-layer protocol browsers use to request web pages. The browser sends a request such as GET, and the server replies with the content and a status code like 200 (OK) or 404 (not found). It normally runs over TCP.","","https,dns,tcp",""],
+["https","HTTPS and TLS","tls|ssl|certificate|padlock","HTTPS is HTTP inside an encrypted TLS tunnel on port 443. The server proves its identity with a certificate and both sides agree on keys, so anyone watching the network cannot read or change the data. The padlock means the connection is encrypted, not that the site is trustworthy.","","security,http",""],
+["dhcp","DHCP","dhcp|automatic ip","DHCP automatically gives devices an IP address, subnet mask, default gateway and DNS server when they join a network, so nobody has to type them in. A home router usually runs a DHCP server that leases addresses for a limited time.","","ip,gateway,ipconflict",""],
+["arp","ARP","arp|address resolution","ARP finds the MAC address that belongs to an IP address on the local network. A device broadcasts a question such as 'who has 192.168.1.1?' and the owner replies with its MAC address, which is then used to build the frame.","","mac,ip",""],
+["icmp","ICMP and ping","icmp|ping|traceroute|tracert","ICMP carries network control messages. The ping tool sends an ICMP echo request and waits for a reply, which shows whether a host is reachable and how long the round trip takes. Traceroute lists each router along the path.","","pingtest,trouble",""],
+["email","Email and file transfer","email|smtp|imap|pop3|ftp","SMTP sends email between servers, IMAP and POP3 let you read it from a mail server, and FTP transfers files. All are Application-layer protocols that run over TCP because they need reliable delivery.","","tcp,application",""],
+["ip","IP addresses","ip address|ipv4|ipv6|public ip|private ip|ip","An IP address is a logical address that identifies a device on a network. IPv4 uses four numbers from 0 to 255, like 192.168.1.10, and IPv6 uses longer hexadecimal addresses because IPv4 addresses ran out. Private ranges (10.x.x.x, 172.16 to 172.31, 192.168.x.x) are used inside LANs, while public addresses are reachable on the internet.","Analogy: a MAC address is like a person's name, while an IP address is like their current home address, which changes when they move.","subnet,mac,dhcp,nat","You can change IP addresses in the simulator's device panel. Try giving two PCs the same one."],
+["subnet","Subnets and masks","subnet*|netmask|mask|cidr|/24","A subnet mask tells a device which part of an IP address is the network and which part is the host. With 255.255.255.0 (/24), 192.168.1.10 and 192.168.1.20 share the network 192.168.1.x and talk directly, but 192.168.2.5 is a different network and needs a router.","","ip,router,gateway","The simulator treats addresses with the same first three numbers as one network."],
+["mac","MAC addresses","mac address|mac","A MAC address is a 48-bit hardware address built into a network card, written like 3C:52:82:AB:12:F4. It identifies a device on the local link and is used by switches and Ethernet frames, while IP addresses are used to route between networks.","","ip,switch,arp",""],
+["dns","DNS","dns|domain name|name server|resolv*","DNS translates names like example.com into IP addresses. Your device asks a resolver, which checks its cache and, if needed, asks the root, top-level-domain and authoritative servers until it gets the answer. Only then can the browser connect to the server's IP address.","Analogy: DNS is the internet's phone book.","ip,http,dnsfail",""],
+["tcp","TCP","tcp|transmission control","TCP is a connection-oriented transport protocol. It sets up a connection with a handshake, numbers each segment, uses acknowledgements to confirm delivery, resends anything lost, and puts data back in order. It is slower than UDP but reliable, so the web, email and file transfer use it.","","udp,handshake,ports",""],
+["udp","UDP","udp|user datagram","UDP is a connectionless transport protocol. It sends datagrams with no handshake, no acknowledgements and no resending, so it has very low overhead and delay. That suits real-time uses such as video calls, online games and DNS, where a late packet is worse than a lost one.","","tcp,ports",""],
+["handshake","TCP three-way handshake","handshake|three-way|syn|ack","The TCP three-way handshake opens a connection. First the client sends SYN to say it wants to talk, then the server replies SYN-ACK to say it is ready, and finally the client sends ACK to confirm. Both sides have now agreed on sequence numbers and can exchange data reliably.","","tcp,ports",""],
+["ports","Port numbers","port*|443","A port number identifies which program on a device should receive the data, while the IP address identifies the device itself. Examples: 80 for HTTP, 443 for HTTPS, 25 for SMTP, 53 for DNS and 22 for SSH. Firewalls often allow or block traffic by port.","","tcp,firewall",""],
+["packets","Packets and transmission","packet|frame|encapsulation|header|transmission|transmit*|data travel*|send data|sending data","Data is split into packets so it can share links and take different routes. Each packet has a header (source and destination addresses, sequence number) and a payload (a piece of the data). Going down the layers the data gains headers (encapsulation), becoming a segment, then a packet, then a frame. The receiver strips the headers and reassembles the pieces in order.","","tcpip,router,switch,tcp","Press Start in the Packet visualization section to watch this happen."],
+["latency","Bandwidth and latency","latency|bandwidth|throughput|lag|mbps","Bandwidth is how much data a link can carry per second, for example 100 Mbps, while latency is how long a packet takes to arrive, measured in milliseconds. If a road is the link, bandwidth is the number of lanes and latency is the travel time. Streaming needs bandwidth, while games and calls need low latency.","","slow,ethernet,wifi",""],
+["nat","NAT","nat|network address translation","NAT lets many devices in a LAN share one public IP address. The router rewrites the private source address and port of outgoing packets and remembers the mapping so replies reach the right device. It also hides internal addresses from the internet.","","router,ip",""],
+["security","Network security basics","security|secure|encryption|vpn|malware|phishing|password*|attack*|hack*","Basic network security means using strong, unique passwords, securing Wi-Fi with WPA2 or WPA3, keeping router firmware and devices updated, running a firewall, using HTTPS, and being careful with phishing links. On public Wi-Fi a VPN adds protection by encrypting your traffic through a tunnel to another network.","","firewall,https,wifi",""],
+["simhow","Using the simulator","simulator|how do i use|how to use|what can i do","The simulator has PCs, a switch and a router. Click a device to see its name, IP and function, and drag it to move it. Use Connect devices and click two devices to add a cable. Add device and Remove change the network, and clicking a cable cuts or restores it. In the device panel you can edit the name or IP or power the device off. Choose a source and destination under Send data and press Send packet.","","simconnect,simsend,simfail,simviz",""],
+["simconnect","Connecting devices","connect devices|add cable|plug in|connect two|connect a","Press Connect devices, then click one device and then another to join them with a cable. Computers normally connect to the switch, and the switch connects to the router. Press the button again to leave connect mode.","","simhow,simsend",""],
+["simsend","Sending a packet","send packet|send a packet|success|unsuccessful","Pick a From and To device under Send data and press Send packet. The packet animates along the route if there is one, and the result says success or explains the failure, for example a cut cable, a powered-off device, a duplicate IP, or two networks with no router between them.","","simfail,trouble",""],
+["simfail","Cutting cables and powering off","cut|disconnect*|power off|unavailable|remove","Click any cable in the simulator to cut it (it turns into a red dashed line) and click again to restore it. Select a device and use Power off to make it unavailable. Then press Send packet and read the troubleshooting message to see how that failure shows up.","","simsend,trouble",""],
+["simviz","Packet visualization","visuali*|animat*|start pause","The Packet visualization section follows one message from a source PC to a destination. It shows the message being created, split into packets, passing through the switch and router, and being rebuilt at the destination, with Start, Pause and Reset controls.","","packets,simhow",""],
+["quiz","The quiz","quiz|test me","The quiz at the bottom of the page has 12 multiple-choice questions on the main networking topics, with instant feedback and an explanation for each answer. Your score is shown at the end and you can restart at any time.","","tcpip,dns,ip",""],
+["trouble","Troubleshooting method","troubleshoot*|not working|fix|problem|can't connect|cannot connect|no connection","A good method is to work from the bottom up. (1) Physical: is the cable plugged in and the device powered on? (2) Link: is Wi-Fi joined to the right network? (3) IP: does the device have a valid address, not 169.254.x.x? (4) Gateway: can you ping the router? (5) Internet: can you ping a public address like 8.8.8.8? (6) DNS: can you open a site by name? The first step that fails shows where the problem is.","","pingtest,nointernet,ipconflict,dnsfail",""],
+["nointernet","No internet connection","no internet|internet down|not connect to internet|can't browse|cannot browse","If you have no internet, first check whether other devices work. If none do, restart the modem and router and check with your provider. If only one device is affected, check its Wi-Fi or cable, make sure it has a valid IP (not 169.254.x.x) and check its default gateway. Then ping 8.8.8.8: if that works but websites do not, the problem is DNS.","","trouble,dnsfail,pingtest",""],
+["dnsfail","DNS problems","dns error|dns problem|can't resolve|cannot resolve|server not found|website not loading|name not resolved","If you can ping 8.8.8.8 but sites will not open by name, DNS is failing. Try another DNS server such as 1.1.1.1 or 8.8.8.8, restart the router, and clear the DNS cache (ipconfig /flushdns on Windows).","","dns,trouble",""],
+["slow","Slow network","slow internet|slow network|slow wifi|buffering|slow","For a slow connection, move closer to the router or use Ethernet, disconnect devices that are using a lot of bandwidth, restart the router, and try the 5 GHz band or another Wi-Fi channel to avoid interference. Testing the speed on a wired connection shows whether the provider or the Wi-Fi is the cause.","","latency,wifi,ethernet",""],
+["ipconflict","IP address conflicts","ip conflict|duplicate ip|same ip|address conflict","An IP conflict happens when two devices have the same IP address, so traffic reaches the wrong device or neither. Fix it by giving each device a unique address or switching them to DHCP so the router assigns addresses.","","dhcp,ip","Give two PCs the same IP and Send packet will fail with a conflict message."],
+["pingtest","Using ping","how to ping|ping command|test connection|test connectivity","Ping tests connectivity. Ping 127.0.0.1 checks your own network software, pinging your router's address checks the local network, and pinging 8.8.8.8 checks internet access. 'Request timed out' means no reply came back, and 'unreachable' means there is no route. Use tracert (Windows) or traceroute to see where packets stop.","","icmp,trouble",""]
+];
+const KB_RX=KB.map(e=>e[2].split("|").map(k=>{const pre=k.endsWith("*");k=pre?k.slice(0,-1):k;
+  return{len:k.length,rx:new RegExp("(?<![a-z0-9])"+k.replace(/[.*+?^${}()|[\]\\\/]/g,"\\$&")+(pre?"":"(?:s|es)?(?![a-z0-9])"))}}));
+function ipNotes(raw){
+  const m=raw.match(/\b\d{1,3}(?:\.\d{1,3}){3}\b/g)||[],out=[];
+  m.slice(0,2).forEach(ip=>{
+    if(!validIp(ip)){out.push(`${ip} is not a valid IPv4 address, because each of the four numbers must be between 0 and 255.`);return}
+    const[a,b]=ip.split(".").map(Number);let t="a public address that can be reached on the internet";
+    if(a===10||(a===172&&b>=16&&b<=31)||(a===192&&b===168))t="a private address used inside LANs, so it is not routable on the internet";
+    else if(a===127)t="a loopback address that always points back to your own computer";
+    else if(a===169&&b===254)t="a link-local (APIPA) address, which a device gives itself when it cannot reach a DHCP server and is a common sign of a connection problem";
+    else if(a>=224&&a<=239)t="a multicast address";
+    out.push(`${ip} is ${t}.`)});
+  if(m.length===2&&validIp(m[0])&&validIp(m[1]))out.push(net(m[0])===net(m[1])?`With a /24 mask (255.255.255.0), ${m[0]} and ${m[1]} are on the same network (${net(m[0])}.x), so they can talk directly through a switch.`:`With a /24 mask (255.255.255.0), ${m[0]} and ${m[1]} are on different networks (${net(m[0])}.x and ${net(m[1])}.x), so a router is needed between them.`);
+  return out;
+}
+function diagnose(){
+  if(!devs.length)return["There are no devices in the simulator yet. Add some with Add device."];
+  const L=[],pcs=devs.filter(d=>d.type==="pc");
+  devs.filter(d=>!d.on).forEach(d=>L.push(`${d.name} is powered off, so it cannot send or receive. Select it and press Power on.`));
+  links.filter(l=>!l.up).forEach(l=>L.push(`The cable between ${get(l.a).name} and ${get(l.b).name} is cut. Click it to restore it.`));
+  devs.filter(d=>!links.some(l=>l.a===d.id||l.b===d.id)).forEach(d=>L.push(`${d.name} has no cable connected. Use Connect devices to join it to the switch or router.`));
+  devs.filter(d=>d.type!=="switch"&&!validIp(d.ip)).forEach(d=>L.push(`${d.name} has ${d.ip?"an invalid":"no"} IP address. Set a valid one such as 192.168.1.x in the device panel.`));
+  const seen={};devs.forEach(d=>{if(d.ip)(seen[d.ip]=seen[d.ip]||[]).push(d.name)});
+  Object.entries(seen).filter(([,v])=>v.length>1).forEach(([ip,v])=>L.push(`IP conflict: ${v.join(" and ")} all use ${ip}. Give each device a unique address.`));
+  const bad=[];
+  for(let i=0;i<pcs.length;i++)for(let j=i+1;j<pcs.length;j++){const a=pcs[i],b=pcs[j];
+    if(!a.on||!b.on||!validIp(a.ip)||!validIp(b.ip))continue;
+    const p=findPath(a.id,b.id);
+    if(!p)bad.push(`${a.name} and ${b.name}: no working path`);
+    else if(net(a.ip)!==net(b.ip)&&!p.some(id=>get(id).type==="router"))bad.push(`${a.name} and ${b.name}: different networks with no router between them`)}
+  if(bad.length)L.push("Pairs that cannot communicate: "+bad.slice(0,6).join("; ")+".");
+  if(!L.length)L.push(`Everything looks healthy: all ${pcs.length} computers are powered on, cabled, have unique valid IPs, and can reach each other. Try cutting a cable and ask me again.`);
+  return L;
+}
+let chatLast=null;
+function chatAnswer(raw){
+  const q=raw.toLowerCase().replace(/[\u2018\u2019]/g,"'").trim();
+  if(!q)return{paras:["Type a networking question and I will do my best to explain it."]};
+  if(/^(hi|hello|hey|good (morning|afternoon|evening))\b/.test(q))return{paras:["Hello! I'm the Networking Assistant. I can explain networking concepts, help you use the simulator, and help troubleshoot connection problems. What would you like to know?"],rel:["lan","tcpip","simhow"]};
+  if(/\b(thanks|thank you|thx)\b/.test(q))return{paras:["You're welcome! Ask me anything else about networking."]};
+  if(/^(help|what can you do|who are you)\??$/.test(q))return{paras:["I can explain LAN, WAN, Wi-Fi and Ethernet, topologies, networking devices, TCP/IP layers and protocols, IP addresses, DNS, TCP, UDP and packets. I can also explain how to use the simulator, check your simulator for problems, and walk through basic troubleshooting."],rel:["topology","tcpip","simhow","trouble"]};
+  if(/diagnos|check (my|the) (network|simulator)|(my|the) (network|simulator).{0,30}(not|n't|fail|broken|problem|work)|why (can'?t|cannot|won'?t|doesn'?t|does not|did|is).{0,40}(reach|send|ping|connect|fail|work)|\b(pc|switch|router)-?\d\b/.test(q)){
+    chatLast=null;return{paras:["Here is what I see in your simulator right now:",...diagnose().map(x=>"• "+x)],rel:["simsend","simfail","trouble"]}}
+  const notes=ipNotes(raw);
+  const sc=KB.map((e,i)=>({i,s:KB_RX[i].reduce((t,k)=>t+(k.rx.test(q)?k.len:0),0)})).filter(x=>x.s>0).sort((a,b)=>b.s-a.s||a.i-b.i);
+  const cmp=/\b(difference|differ|differs|vs|versus|compare|comparison|between)\b/.test(q);
+  if(!sc.length){
+    if(notes.length)return{paras:notes};
+    if(chatLast&&/\b(more|example|explain|elaborate|why|simpl\w*|what do you mean|detail)\b/.test(q)){
+      const e=chatLast,ex=e[4]||`In short: ${e[3].split(". ")[0]}.`;return{paras:[`More on ${e[1]}: ${ex}`,...(e[6]?[e[6]]:[])],rel:e[5].split(",")}}
+    return{paras:["I'm not sure I understood that. I can explain networking topics such as LANs and WANs, topologies, routers and switches, TCP/IP layers, IP addresses, DNS, TCP vs UDP and packets, and I can help troubleshoot or use the simulator. Try rephrasing, or pick a topic below."],rel:["lan","router","tcpip","dns","trouble","simhow"]};
+  }
+  const pick=[sc[0]];
+  if(sc[1]&&(cmp||sc[1].s>=sc[0].s*0.9))pick.push(sc[1]);
+  const paras=[...notes];
+  pick.forEach((x,n)=>{const e=KB[x.i];paras.push(pick.length>1?`${e[1]}: ${e[3]}`:e[3]);if(pick.length===1&&e[4]&&!notes.length)paras.push(e[4])});
+  if(pick.length>1)paras.push("Key point: compare what each one does, which layer it works at, and when you would choose one over the other.");
+  const first=KB[pick[0].i];chatLast=first;
+  const sim=pick.map(x=>KB[x.i][6]).filter(Boolean)[0];if(sim&&!notes.length)paras.push("Try it: "+sim);
+  const rel=[...new Set(pick.flatMap(x=>KB[x.i][5].split(",")))].filter(id=>!pick.some(x=>KB[x.i][0]===id)).slice(0,4);
+  return{paras,rel};
+}
+/*CHAT-ENGINE-END*/
+const chatBox=$("chat");
+function cmsg(role,obj){
+  const m=document.createElement("div");m.className="msg "+(role==="u"?"u":"b");
+  const w=document.createElement("span");w.className="who";w.textContent=role==="u"?"You":"Networking Assistant";m.appendChild(w);
+  (obj.paras||[]).forEach(t=>{const p=document.createElement("p");p.textContent=t;m.appendChild(p)});
+  if(obj.rel&&obj.rel.length){const d=document.createElement("div");d.className="rel";d.append("Related topics: ");
+    obj.rel.forEach(id=>{const e=KB.find(k=>k[0]===id);if(!e)return;const b=document.createElement("button");b.textContent=e[1];b.onclick=()=>cask("Tell me about "+e[1]);d.appendChild(b)});m.appendChild(d)}
+  chatBox.appendChild(m);chatBox.scrollTop=chatBox.scrollHeight;return m;
+}
+async function cask(t){
+  t=t.trim();if(!t)return;
+  cmsg("u",{paras:[t]});const tmp=cmsg("b",{paras:["Thinking…"]});
+  let a=null;
+  if(CHAT_API_URL){try{const r=await fetch(CHAT_API_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({question:t})});const j=await r.json();if(j&&j.answer)a={paras:[String(j.answer)]}}catch(e){}}
+  await new Promise(r=>setTimeout(r,450));
+  if(!a)a=chatAnswer(t);
+  tmp.remove();cmsg("b",a);
+}
+function csend(){const i=$("cin");const t=i.value;i.value="";cask(t)}
+$("csend").onclick=csend;$("cin").onkeydown=e=>{if(e.key==="Enter")csend()};
+$("cclear").onclick=()=>{chatBox.innerHTML="";chatLast=null;cmsg("b",{paras:["Chat cleared. What would you like to know about networking?"]})};
+const TESTQ=["What is the difference between a LAN and a WAN?","How does a router differ from a switch?","What happens during the TCP three-way handshake?","How does DNS work?","Is 192.168.1.10 a private IP address?","Why can't PC-1 reach PC-3 in my simulator?"];
+$("ctest").onclick=async()=>{$("ctest").disabled=true;for(const q of TESTQ)await cask(q);$("ctest").disabled=false};
+$("csug").innerHTML="";
+["What is a LAN?","What are network topologies?","TCP vs UDP","What is the TCP/IP model?","How do I use the simulator?","My internet is slow"].forEach(q=>{const b=document.createElement("button");b.textContent=q;b.onclick=()=>cask(q);$("csug").appendChild(b)});
+cmsg("b",{paras:["Hi! I'm the Networking Assistant. Ask me about LANs, WANs, Wi-Fi, topologies, routers and switches, the TCP/IP layers, IP addresses, DNS, TCP and UDP, packets or troubleshooting. I can also check the network in your simulator. Try a suggestion below or type your own question."]});
 reset();vreset();
 </script>
 </body>
