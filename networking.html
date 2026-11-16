@@ -30,6 +30,35 @@ main{max-width:1200px;margin:auto;padding:4px 24px 40px}
 @media (max-width:900px){.c1grid{grid-template-columns:1fr}.hero h1{font-size:2rem}.comp-head h2{font-size:1.35rem}}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
 h3{font:600 1.08rem Georgia,serif;margin:0 0 10px}
+/* overview tiles */
+.glance{margin-top:26px}
+.glance p{margin:0 0 12px;color:var(--mute)}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.tile{display:flex;flex-direction:column;gap:2px;padding:14px;background:var(--panel);border:1px solid var(--line);border-radius:12px;text-decoration:none;color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.06);transition:transform .15s,border-color .15s}
+.tile:hover{transform:translateY(-2px);border-color:var(--teal)}
+.tile b{font:700 1.3rem Georgia,serif;color:var(--teal)}.tile strong{font-size:1rem}.tile span{font-size:.85rem;color:var(--mute)}
+.num.alt{background:transparent;border:2px solid var(--teal);color:var(--teal)}
+/* study guide */
+.stack{display:grid;grid-template-columns:minmax(0,1fr);gap:16px}
+.card{min-width:0}
+.glgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px;margin:10px 0 0}
+.gl{background:var(--bg);border-radius:8px;padding:10px 12px}.gl dt{font-weight:700;color:var(--teal)}.gl dd{margin:2px 0 0;font-size:.92rem}
+.topogrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px}
+.topo h4{margin:8px 0 2px;font:600 1.02rem Georgia,serif}.topo p{margin:0 0 6px;font-size:.9rem}.topo .pc{color:var(--mute)}
+.tw{overflow-x:auto;min-width:0}
+.tbl{width:100%;border-collapse:collapse;font-size:.93rem}
+.tbl th,.tbl td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+.tbl th{background:var(--bg);font-weight:600;white-space:nowrap}
+.cmpgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:16px}
+.cmpgrid h4{margin:0 0 6px;font:600 1.02rem Georgia,serif}
+.steps ol{margin:0;padding-left:22px}.steps li{margin:4px 0}
+.take{margin:0;padding-left:20px}.take li{margin:6px 0}
+.vidgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:16px}
+.vwrap{position:relative;padding-top:56.25%;border-radius:10px;overflow:hidden;background:#000}
+.vwrap iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.vid{margin:0}.vid figcaption{margin-top:8px;font-size:.93rem}.vid figcaption strong{display:block;font-size:1rem}
+.vlinks a{display:inline-block;margin:4px 6px 0 0;padding:4px 12px;border:1px solid var(--teal);border-radius:99px;color:var(--ink);text-decoration:none;font-size:.9rem}
+.vlinks a:hover{background:var(--teal);color:var(--on)}
 hr.sep{border:0;border-top:1px solid var(--line);margin:18px 0 14px}
 footer{border-top:1px solid var(--line);padding:26px 24px;text-align:center;color:var(--mute);font-size:.9rem}
 footer strong{color:var(--ink)}
@@ -120,10 +149,24 @@ dt{color:var(--mute)}dd{margin:0}
   <li><a href="#simulator">1 · Simulator</a></li>
   <li><a href="#packets">2 · Packets</a></li>
   <li><a href="#tcpip">3 · TCP/IP model</a></li>
+  <li><a href="#guide">Study guide</a></li>
+  <li><a href="#videos">Videos</a></li>
   <li><a href="#quiz">4 · Quiz</a></li>
   <li><a href="#assistant">5 · Chatbot</a></li>
 </ul></nav>
 <main id="main">
+<section class="glance" aria-label="Site overview">
+  <p>Welcome! Work through the page from top to bottom, or jump straight to a section. Suggested path: build a network, watch the packets, learn the layers, read the study guide, then test yourself.</p>
+  <div class="tiles">
+    <a class="tile" href="#simulator"><b>1</b><strong>Simulator</strong><span>Build and break a network</span></a>
+    <a class="tile" href="#packets"><b>2</b><strong>Packets</strong><span>Watch data travel</span></a>
+    <a class="tile" href="#tcpip"><b>3</b><strong>TCP/IP model</strong><span>Four layers explained</span></a>
+    <a class="tile" href="#guide"><b>A</b><strong>Study guide</strong><span>Terms, devices, protocols</span></a>
+    <a class="tile" href="#videos"><b>B</b><strong>Videos</strong><span>Learn by watching</span></a>
+    <a class="tile" href="#quiz"><b>4</b><strong>Quiz</strong><span>12 questions with feedback</span></a>
+    <a class="tile" href="#assistant"><b>5</b><strong>Chatbot</strong><span>Ask anything</span></a>
+  </div>
+</section>
 <div class="comp" id="simulator"><div class="comp-head"><span class="num" aria-hidden="true">1</span><div><h2>Interactive Network Simulator</h2><p>Connect devices, send data between computers, and see what happens when a cable is cut or a device goes offline.</p></div></div>
 <div class="c1grid">
   <section class="card" aria-label="Network canvas">
@@ -194,6 +237,143 @@ dt{color:var(--mute)}dd{margin:0}
     <div class="bar"><button id="t3prev">Previous</button><button class="primary" id="t3next">Next step</button><span class="hint" id="t3count" style="align-self:center;margin:0"></span></div>
     <div id="t3web" aria-live="polite"></div>
   </section></div>
+<div class="comp" id="guide"><div class="comp-head"><span class="num alt" aria-hidden="true">A</span><div><h2>Study Guide</h2><p>Quick reference for the key ideas behind the tools above.</p></div></div>
+  <div class="stack">
+    <section class="card" aria-label="Key terms">
+      <h3>Key terms</h3>
+      <div class="row"><label for="glq">Search</label><input id="glq" type="search" placeholder="Type a word, for example router or port" autocomplete="off"></div>
+      <p class="hint" id="glcount" style="margin:6px 0 0"></p>
+      <dl class="glgrid" id="glist"></dl>
+    </section>
+
+    <section class="card" aria-label="Network topologies">
+      <h3>Network topologies at a glance</h3>
+      <p class="hint" style="margin:0 0 12px">A topology is the layout of a network. Your simulator starts as a star.</p>
+      <div class="topogrid" id="topogrid"></div>
+    </section>
+
+    <section class="card" aria-label="Network devices">
+      <h3>Networking devices</h3>
+      <div class="tw"><table class="tbl">
+        <thead><tr><th>Device</th><th>Works at</th><th>What it does</th><th>Where you see it</th></tr></thead>
+        <tbody>
+          <tr><td>Network card (NIC)</td><td>Network Access</td><td>Connects a device to the network and gives it a MAC address.</td><td>Inside every laptop, phone and PC</td></tr>
+          <tr><td>Hub</td><td>Network Access</td><td>Repeats every signal to all ports. Simple, but wasteful and insecure.</td><td>Old networks</td></tr>
+          <tr><td>Switch</td><td>Network Access</td><td>Forwards frames only to the port of the right MAC address.</td><td>Offices, schools, home routers</td></tr>
+          <tr><td>Access point</td><td>Network Access</td><td>Lets Wi-Fi devices join a wired network.</td><td>Ceilings, home routers</td></tr>
+          <tr><td>Router</td><td>Internet</td><td>Connects different networks and forwards packets using IP addresses.</td><td>Your home router, internet backbone</td></tr>
+          <tr><td>Modem</td><td>Network Access</td><td>Converts the provider's line signal into digital data and back.</td><td>Cable, fibre or DSL box</td></tr>
+          <tr><td>Firewall</td><td>Internet / Transport</td><td>Allows or blocks traffic based on rules (address, port, protocol).</td><td>Built into routers and operating systems</td></tr>
+        </tbody></table></div>
+    </section>
+
+    <section class="card" aria-label="Comparisons">
+      <h3>Side-by-side comparisons</h3>
+      <div class="cmpgrid">
+        <div class="tw"><h4>LAN vs WAN</h4><table class="tbl"><thead><tr><th></th><th>LAN</th><th>WAN</th></tr></thead><tbody>
+          <tr><td>Area</td><td>Room, home, building</td><td>Cities, countries</td></tr>
+          <tr><td>Owner</td><td>One person or organization</td><td>Often many providers</td></tr>
+          <tr><td>Speed</td><td>High</td><td>Lower, varies</td></tr>
+          <tr><td>Cost</td><td>Low</td><td>Higher</td></tr>
+          <tr><td>Example</td><td>School computer lab</td><td>The internet</td></tr></tbody></table></div>
+        <div class="tw"><h4>Wi-Fi vs Ethernet</h4><table class="tbl"><thead><tr><th></th><th>Wi-Fi</th><th>Ethernet</th></tr></thead><tbody>
+          <tr><td>Medium</td><td>Radio waves</td><td>Cable</td></tr>
+          <tr><td>Stability</td><td>Can drop or slow down</td><td>Very steady</td></tr>
+          <tr><td>Mobility</td><td>Move freely</td><td>Tied to a cable</td></tr>
+          <tr><td>Latency</td><td>Higher</td><td>Lower</td></tr>
+          <tr><td>Best for</td><td>Phones, laptops</td><td>Desktops, servers, gaming</td></tr></tbody></table></div>
+        <div class="tw"><h4>TCP vs UDP</h4><table class="tbl"><thead><tr><th></th><th>TCP</th><th>UDP</th></tr></thead><tbody>
+          <tr><td>Connection</td><td>Handshake first</td><td>None</td></tr>
+          <tr><td>Delivery</td><td>Guaranteed, resent if lost</td><td>Not guaranteed</td></tr>
+          <tr><td>Order</td><td>Kept in order</td><td>May arrive out of order</td></tr>
+          <tr><td>Speed</td><td>Slower</td><td>Faster</td></tr>
+          <tr><td>Used for</td><td>Web, email, files</td><td>Video calls, games, DNS</td></tr></tbody></table></div>
+      </div>
+    </section>
+
+    <section class="card" aria-label="Protocols and ports">
+      <h3>Common protocols and ports</h3>
+      <div class="tw"><table class="tbl">
+        <thead><tr><th>Protocol</th><th>Layer</th><th>Port</th><th>Purpose</th></tr></thead>
+        <tbody>
+          <tr><td>HTTP</td><td>Application</td><td>80</td><td>Loads web pages</td></tr>
+          <tr><td>HTTPS</td><td>Application</td><td>443</td><td>Loads web pages securely (HTTP over TLS)</td></tr>
+          <tr><td>DNS</td><td>Application</td><td>53</td><td>Turns names into IP addresses</td></tr>
+          <tr><td>DHCP</td><td>Application</td><td>67 / 68</td><td>Hands out IP addresses automatically</td></tr>
+          <tr><td>SMTP</td><td>Application</td><td>25</td><td>Sends email between servers</td></tr>
+          <tr><td>IMAP / POP3</td><td>Application</td><td>143 / 110</td><td>Reads email from a server</td></tr>
+          <tr><td>FTP</td><td>Application</td><td>21</td><td>Transfers files</td></tr>
+          <tr><td>SSH</td><td>Application</td><td>22</td><td>Secure remote login</td></tr>
+          <tr><td>TCP / UDP</td><td>Transport</td><td>-</td><td>Reliable / fast delivery between programs</td></tr>
+          <tr><td>IP, ICMP</td><td>Internet</td><td>-</td><td>Addressing and routing; ping and error messages</td></tr>
+          <tr><td>ARP</td><td>Internet / Network Access</td><td>-</td><td>Finds the MAC address for an IP address</td></tr>
+          <tr><td>Ethernet, Wi-Fi</td><td>Network Access</td><td>-</td><td>Moves frames across one link</td></tr>
+        </tbody></table></div>
+    </section>
+
+    <section class="card steps" aria-label="Troubleshooting guide">
+      <h3>Troubleshooting guide</h3>
+      <p class="hint" style="margin:0 0 8px">Work from the bottom up and stop at the first step that fails.</p>
+      <ol>
+        <li><strong>Check the physical connection.</strong> Is the cable plugged in, the device powered on, and Wi-Fi turned on?</li>
+        <li><strong>Check the link.</strong> Is the device joined to the right Wi-Fi network or showing a link light on the port?</li>
+        <li><strong>Check the IP address.</strong> It should be valid and not start with 169.254, which means DHCP failed.</li>
+        <li><strong>Ping the router.</strong> This tests your local network and gateway.</li>
+        <li><strong>Ping a public address</strong> such as 8.8.8.8. This tests your internet connection.</li>
+        <li><strong>Open a site by name.</strong> If the ping works but the site does not, DNS is the problem.</li>
+        <li><strong>Restart and compare.</strong> Restart the device, then the router. Check whether other devices have the same problem.</li>
+      </ol>
+      <div class="tw" style="margin-top:14px"><table class="tbl">
+        <thead><tr><th>Symptom</th><th>Likely cause</th><th>What to try</th></tr></thead>
+        <tbody>
+          <tr><td>Connected, but no internet</td><td>Router, modem or provider problem</td><td>Restart modem and router; check other devices</td></tr>
+          <tr><td>IP starts with 169.254</td><td>DHCP server not reached</td><td>Check the cable or Wi-Fi; renew the address; restart the router</td></tr>
+          <tr><td>Can ping 8.8.8.8 but not a website name</td><td>DNS failure</td><td>Switch to another DNS server such as 1.1.1.1</td></tr>
+          <tr><td>Slow or dropping Wi-Fi</td><td>Distance or interference</td><td>Move closer, use 5 GHz, or plug in with Ethernet</td></tr>
+          <tr><td>Two devices keep disconnecting</td><td>Duplicate IP address</td><td>Give each device a unique IP or use DHCP</td></tr>
+          <tr><td>Can reach local devices but not the internet</td><td>Wrong default gateway</td><td>Set the gateway to the router's address</td></tr>
+        </tbody></table></div>
+    </section>
+
+    <section class="card" aria-label="Key takeaways">
+      <h3>Key takeaways</h3>
+      <ul class="take">
+        <li>A <strong>switch</strong> connects devices inside a network using MAC addresses. A <strong>router</strong> connects different networks using IP addresses.</li>
+        <li>An <strong>IP address</strong> says where a device is on a network. A <strong>MAC address</strong> identifies the network card itself.</li>
+        <li>Data is split into <strong>packets</strong>. Each layer of the TCP/IP model adds a header on the way down and removes it on the way up.</li>
+        <li><strong>TCP</strong> is reliable and ordered. <strong>UDP</strong> is fast and light. Both use port numbers to reach the right program.</li>
+        <li><strong>DNS</strong> is the internet's phone book: it turns names into IP addresses before any web page can load.</li>
+        <li>When something breaks, <strong>troubleshoot from the bottom up</strong>: cable, link, IP, gateway, internet, DNS.</li>
+      </ul>
+    </section>
+  </div>
+</div>
+<div class="comp" id="videos"><div class="comp-head"><span class="num alt" aria-hidden="true">B</span><div><h2>Educational Videos</h2><p>Watch an expert walk through the same ideas. These are third-party videos hosted on YouTube.</p></div></div>
+  <section class="card" aria-label="Videos">
+    <div class="vidgrid">
+      <figure class="vid">
+        <div class="vwrap"><iframe src="https://www.youtube-nocookie.com/embed/yM-XNq9ADlI" title="How the TCP/IP Model Actually Works (CCNA Day 3)" loading="lazy" allow="accelerometer; encrypted-media; gyroscope; picture-in-picture" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe></div>
+        <figcaption><strong>How the TCP/IP model actually works</strong>A longer lesson (about 41 minutes) using a mail-delivery analogy to explain the layers, encapsulation, and how TCP/IP compares with the OSI model. <a href="https://www.youtube.com/watch?v=yM-XNq9ADlI" target="_blank" rel="noopener">Watch on YouTube</a></figcaption>
+      </figure>
+      <figure class="vid">
+        <div class="vwrap"><iframe src="https://www.youtube-nocookie.com/embed/HFRU01uS9nA" title="TCP/IP Model (Internet Protocol Suite), Network Fundamentals Part 6" loading="lazy" allow="accelerometer; encrypted-media; gyroscope; picture-in-picture" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe></div>
+        <figcaption><strong>TCP/IP model (Internet Protocol Suite)</strong>A shorter lesson from the Network Fundamentals series that goes through the application, transport, network and link layers and compares them with OSI. <a href="https://www.youtube.com/watch?v=HFRU01uS9nA" target="_blank" rel="noopener">Watch on YouTube</a></figcaption>
+      </figure>
+    </div>
+    <hr class="sep">
+    <h3>Find more on a topic</h3>
+    <div class="vlinks">
+      <a href="https://www.youtube.com/results?search_query=LAN+vs+WAN+explained" target="_blank" rel="noopener">LAN vs WAN</a>
+      <a href="https://www.youtube.com/results?search_query=how+routers+and+switches+work" target="_blank" rel="noopener">Routers and switches</a>
+      <a href="https://www.youtube.com/results?search_query=IP+addresses+explained+for+beginners" target="_blank" rel="noopener">IP addresses</a>
+      <a href="https://www.youtube.com/results?search_query=how+DNS+works" target="_blank" rel="noopener">How DNS works</a>
+      <a href="https://www.youtube.com/results?search_query=TCP+vs+UDP+explained" target="_blank" rel="noopener">TCP vs UDP</a>
+      <a href="https://www.youtube.com/results?search_query=Wi-Fi+vs+Ethernet+explained" target="_blank" rel="noopener">Wi-Fi vs Ethernet</a>
+      <a href="https://www.youtube.com/results?search_query=network+security+basics+for+beginners" target="_blank" rel="noopener">Network security basics</a>
+    </div>
+    <p class="hint">Videos load from YouTube, so they need an internet connection. If one does not play, use its "Watch on YouTube" link.</p>
+  </section>
+</div>
 <div class="comp" id="quiz"><div class="comp-head"><span class="num" aria-hidden="true">4</span><div><h2>Networking Quiz</h2><p>Twelve multiple-choice questions with instant feedback and an explanation for every answer.</p></div></div>
   <section class="card" aria-label="Networking quiz">
     <div id="qbox"></div>
@@ -598,7 +778,7 @@ const KB=[
 ["simsend","Sending a packet","send packet|send a packet|success|unsuccessful","Pick a From and To device under Send data and press Send packet. The packet animates along the route if there is one, and the result says success or explains the failure, for example a cut cable, a powered-off device, a duplicate IP, or two networks with no router between them.","","simfail,trouble",""],
 ["simfail","Cutting cables and powering off","cut|disconnect*|power off|unavailable|remove","Click any cable in the simulator to cut it (it turns into a red dashed line) and click again to restore it. Select a device and use Power off to make it unavailable. Then press Send packet and read the troubleshooting message to see how that failure shows up.","","simsend,trouble",""],
 ["simviz","Packet visualization","visuali*|animat*|start pause","The Packet visualization section follows one message from a source PC to a destination. It shows the message being created, split into packets, passing through the switch and router, and being rebuilt at the destination, with Start, Pause and Reset controls.","","packets,simhow",""],
-["quiz","The quiz","quiz|test me","The quiz at the bottom of the page has 12 multiple-choice questions on the main networking topics, with instant feedback and an explanation for each answer. Your score is shown at the end and you can restart at any time.","","tcpip,dns,ip",""],
+["quiz","The quiz","quiz|test me","The Networking Quiz section has 12 multiple-choice questions on the main networking topics, with instant feedback and an explanation for each answer. Your score is shown at the end and you can restart at any time.","","tcpip,dns,ip",""],
 ["trouble","Troubleshooting method","troubleshoot*|not working|fix|problem|can't connect|cannot connect|no connection","A good method is to work from the bottom up. (1) Physical: is the cable plugged in and the device powered on? (2) Link: is Wi-Fi joined to the right network? (3) IP: does the device have a valid address, not 169.254.x.x? (4) Gateway: can you ping the router? (5) Internet: can you ping a public address like 8.8.8.8? (6) DNS: can you open a site by name? The first step that fails shows where the problem is.","","pingtest,nointernet,ipconflict,dnsfail",""],
 ["nointernet","No internet connection","no internet|internet down|not connect to internet|can't browse|cannot browse","If you have no internet, first check whether other devices work. If none do, restart the modem and router and check with your provider. If only one device is affected, check its Wi-Fi or cable, make sure it has a valid IP (not 169.254.x.x) and check its default gateway. Then ping 8.8.8.8: if that works but websites do not, the problem is DNS.","","trouble,dnsfail,pingtest",""],
 ["dnsfail","DNS problems","dns error|dns problem|can't resolve|cannot resolve|server not found|website not loading|name not resolved","If you can ping 8.8.8.8 but sites will not open by name, DNS is failing. Try another DNS server such as 1.1.1.1 or 8.8.8.8, restart the router, and clear the DNS cache (ipconfig /flushdns on Windows).","","dns,trouble",""],
@@ -749,6 +929,34 @@ $("ctest").onclick=async()=>{$("ctest").disabled=true;for(const q of TESTQ)await
 $("csug").innerHTML="";
 ["What is a LAN?","TCP vs UDP","How do I use the simulator?","My internet is slow","Tell me a joke","Quiz me"].forEach(q=>{const b=document.createElement("button");b.textContent=q;b.onclick=()=>cask(q);$("csug").appendChild(b)});
 cmsg("b",{paras:["Hi! I'm the Networking Assistant. Ask me about LANs, WANs, Wi-Fi, topologies, routers and switches, the TCP/IP layers, IP addresses, DNS, TCP and UDP, packets or troubleshooting. I can also check the network in your simulator. Try a suggestion below or type your own question."]});
+/* ---------- Study guide ---------- */
+const GLOS=[["Network","Two or more devices connected so they can share data and resources."],["Host","Any device on a network that has an address, such as a computer, phone or server."],["LAN","Local Area Network: devices in a small area such as a home, school or office."],["WAN","Wide Area Network: links networks across cities or countries. The internet is the largest WAN."],["Router","Connects different networks and forwards packets using IP addresses."],["Switch","Connects devices inside one network and forwards frames using MAC addresses."],["Hub","Old device that repeats every signal to every port."],["Access point","Lets Wi-Fi devices join a wired network."],["Modem","Converts the provider's line signal into digital data and back."],["IP address","A logical address that identifies a device on a network, such as 192.168.1.10."],["MAC address","A hardware address built into a network card, used on the local link."],["Subnet mask","Shows which part of an IP address is the network and which part is the device."],["Default gateway","The router a device uses to reach other networks."],["DNS","Domain Name System: turns names like example.com into IP addresses."],["DHCP","Automatically gives devices an IP address, mask, gateway and DNS server."],["TCP","Reliable transport protocol: handshake, acknowledgements, resends lost data, keeps order."],["UDP","Fast transport protocol with no handshake and no delivery guarantee."],["Port","A number that identifies which program should receive the data, for example 443 for HTTPS."],["Packet","A small piece of data with a header holding addresses and a sequence number."],["Frame","A packet wrapped for one local link, with MAC addresses and an error check."],["Protocol","An agreed set of rules for how devices communicate."],["Encapsulation","Adding a header at each layer as data moves down toward the cable."],["Bandwidth","How much data a link can carry per second."],["Latency","How long data takes to travel from sender to receiver."],["Firewall","Filters traffic using rules to allow or block connections."],["NAT","Lets many private devices share one public IP address."],["VPN","Encrypts your traffic through a tunnel to another network."],["Topology","The layout of how devices in a network are connected."]];
+function glRender(){
+  const f=$("glq").value.toLowerCase().trim();
+  const list=GLOS.filter(([t,d])=>!f||t.toLowerCase().includes(f)||d.toLowerCase().includes(f));
+  $("glist").innerHTML=list.map(([t,d])=>`<div class="gl"><dt>${t}</dt><dd>${d}</dd></div>`).join("")||'<p class="hint">No terms match your search.</p>';
+  $("glcount").textContent=`Showing ${list.length} of ${GLOS.length} terms`;
+}
+$("glq").oninput=glRender;glRender();
+const TOPOS=[
+ ["star","Star","Every device connects to a central switch.","Easy to add or fix devices.","The switch is a single point of failure."],
+ ["bus","Bus","All devices share one backbone cable.","Cheap and simple.","A break splits the network; slows as devices are added."],
+ ["ring","Ring","Each device connects to two neighbours in a loop.","Orderly traffic.","One break can stop the ring unless it is dual."],
+ ["mesh","Mesh","Devices have many links to each other.","Very reliable; traffic can reroute.","Many cables, so it is costly."],
+ ["tree","Tree / hybrid","Several stars joined by a backbone.","Scales to large buildings.","The backbone is a critical point."]
+];
+function topoSvg(t){
+  let N=[],E=[],extra="";
+  if(t==="star"){N=[[70,55],[70,12],[112,38],[100,94],[40,94],[28,38]];E=[[0,1],[0,2],[0,3],[0,4],[0,5]]}
+  if(t==="bus"){N=[[25,25],[60,25],[95,25],[125,25],[40,95],[110,95]];extra='<line x1="10" y1="60" x2="130" y2="60"/>';E=[[0,[25,60]],[1,[60,60]],[2,[95,60]],[3,[125,60]],[4,[40,60]],[5,[110,60]]]}
+  if(t==="ring"){for(let i=0;i<6;i++){const a=(i*60-90)*Math.PI/180;N.push([70+38*Math.cos(a),55+38*Math.sin(a)])}E=[[0,1],[1,2],[2,3],[3,4],[4,5],[5,0]]}
+  if(t==="mesh"){for(let i=0;i<5;i++){const a=(i*72-90)*Math.PI/180;N.push([70+40*Math.cos(a),57+40*Math.sin(a)])}for(let i=0;i<5;i++)for(let j=i+1;j<5;j++)E.push([i,j])}
+  if(t==="tree"){N=[[70,12],[35,52],[105,52],[18,95],[52,95],[88,95],[122,95]];E=[[0,1],[0,2],[1,3],[1,4],[2,5],[2,6]]}
+  const L=E.map(([a,b])=>{const A=N[a],B=Array.isArray(b)?b:N[b];return `<line x1="${A[0]}" y1="${A[1]}" x2="${B[0]}" y2="${B[1]}"/>`}).join("");
+  const C=N.map(([x,y],i)=>`<circle cx="${x}" cy="${y}" r="${t==="star"&&i===0?10:7}"/>`).join("");
+  return `<svg viewBox="0 0 140 110" role="img" aria-label="${t} topology diagram"><g stroke="var(--teal)" stroke-width="2" fill="none">${extra}${L}</g><g fill="var(--panel)" stroke="var(--teal)" stroke-width="2.5">${C}</g></svg>`;
+}
+$("topogrid").innerHTML=TOPOS.map(([k,n,d,g,w])=>`<div class="topo">${topoSvg(k)}<h4>${n}</h4><p>${d}</p><p class="pc"><strong>Good:</strong> ${g}<br><strong>Watch out:</strong> ${w}</p></div>`).join("");
 /* ---------- Page navigation ---------- */
 (function(){
   const links=[...document.querySelectorAll("nav.top a")],secs=links.map(a=>document.querySelector(a.getAttribute("href")));
