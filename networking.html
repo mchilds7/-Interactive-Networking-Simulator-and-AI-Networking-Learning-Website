@@ -66,13 +66,22 @@ dt{color:var(--mute)}dd{margin:0}
 .enc span{padding:6px 10px;border:2px solid var(--teal);border-radius:6px;font-size:.85rem;background:var(--panel)}
 .enc span.d{background:var(--teal);color:var(--on)}
 #t3web{background:var(--bg);border-left:6px solid var(--amber);border-radius:8px;padding:12px;margin-top:8px;min-height:84px}
+.qbar{height:8px;background:var(--bg);border-radius:99px;overflow:hidden;margin:6px 0 12px}
+#qfill{height:100%;background:var(--teal);width:0;transition:width .3s}
+.qo{display:block;width:100%;text-align:left;margin:8px 0;padding:10px 14px;border-width:2px}
+.qo.right{border-color:var(--green)}.qo.wrong{border-color:var(--red)}
+.qo[disabled]{cursor:default;opacity:1;color:var(--ink)}
+#qfb{margin-top:10px;padding:12px;border-radius:8px;background:var(--bg);border-left:6px solid var(--line)}
+#qfb.ok{border-color:var(--green)}#qfb.no{border-color:var(--red)}
+#qq{font:600 1.15rem Georgia,serif;margin:4px 0 6px}
+.qtag{display:inline-block;font-size:.8rem;color:var(--mute);border:1px solid var(--line);border-radius:99px;padding:1px 10px}
 @media (prefers-reduced-motion:reduce){*{scroll-behavior:auto}}
 </style>
 </head>
 <body>
 <header>
   <h1>Networking Lab: Interactive Network Simulator</h1>
-  <p style="font-size:.8rem;margin:0 0 4px;color:var(--mute)">Version: Components 1, 2 and 3</p>
+  <p style="font-size:.8rem;margin:0 0 4px;color:var(--mute)">Version: Components 1, 2, 3 and 4</p>
   <p>Build a small network, cut a cable, change an address, and watch what happens when one computer sends data to another.</p>
 </header>
 <main>
@@ -141,6 +150,10 @@ dt{color:var(--mute)}dd{margin:0}
     <p class="hint" style="margin:0 0 8px">What happens when you type <strong>https://example.com</strong> into your browser.</p>
     <div class="bar"><button id="t3prev">Previous</button><button class="primary" id="t3next">Next step</button><span class="hint" id="t3count" style="align-self:center;margin:0"></span></div>
     <div id="t3web" aria-live="polite"></div>
+  </section>
+  <section class="card" style="grid-column:1/-1" aria-label="Networking quiz">
+    <h2>Networking quiz</h2>
+    <div id="qbox"></div>
   </section>
 </main>
 
@@ -427,6 +440,57 @@ $("t3prev").onclick=()=>{t3run++;$("t3msg").textContent="";t3step--;t3web()};
 $("t3next").onclick=()=>{t3run++;$("t3msg").textContent="";t3step++;t3web()};
 t3web();t3pick(0);
 $("t3web").textContent=`Step 1: ${WEB[0][1]}`;
+
+/* ---------- Component 4: Quiz ---------- */
+const QZ=[
+ {t:"Basic networking",q:"What is a computer network?",o:["A single computer with several programs installed","A group of connected devices that can share data and resources","A program that blocks viruses","A type of internet browser"],a:1,e:"A network is two or more devices connected so they can communicate and share data, files, printers or an internet connection."},
+ {t:"LAN and WAN",q:"Which statement best describes a WAN?",o:["A network that covers a large area, such as linking offices in different cities","A network limited to one room","A wireless-only network inside a home","A network that has no routers"],a:0,e:"A WAN (wide area network) spans cities, countries or continents. The internet is the largest WAN. A LAN covers a small area such as a home, school or office."},
+ {t:"IP addresses",q:"Which of these is a private IPv4 address?",o:["8.8.8.8","172.32.4.1","93.184.216.34","192.168.0.5"],a:3,e:"Private ranges are 10.0.0.0/8, 172.16.0.0 to 172.31.255.255, and 192.168.0.0/16. 172.32.4.1 is just outside the private 172.16 to 172.31 range."},
+ {t:"Routers",q:"Which device connects different networks and forwards packets based on IP addresses?",o:["Switch","Router","Hub","Network cable"],a:1,e:"A router reads the destination IP address and chooses the next hop toward another network. Your home router connects your LAN to your internet provider."},
+ {t:"Switches",q:"What does a switch use to decide where to send a frame inside a LAN?",o:["Domain names","Port numbers","MAC addresses","Email addresses"],a:2,e:"A switch learns which MAC address is on which port and sends each frame only to the correct port, instead of to every device."},
+ {t:"TCP and UDP",q:"Which statement about UDP is correct?",o:["It guarantees delivery and order of every packet","It sets up a three-way handshake before sending","It is connectionless and has lower overhead, so it suits live video and voice","It can only be used for email"],a:2,e:"UDP sends data without a connection or delivery guarantee, so it is fast. TCP is the reliable one: it uses a handshake, acknowledgements and resends lost data."},
+ {t:"TCP/IP model",q:"Which TCP/IP layer is responsible for IP addressing and routing?",o:["Application layer","Transport layer","Internet layer","Network Access layer"],a:2,e:"The Internet layer adds source and destination IP addresses and routes packets between networks. The Transport layer handles ports and TCP/UDP."},
+ {t:"Network packets",q:"Why is data split into packets before it is sent?",o:["To make the data larger","So links can be shared, lost pieces can be resent on their own, and packets can take different routes","To remove the need for IP addresses","Because packets are always encrypted"],a:1,e:"Packets let many users share the same links, and only a lost packet needs to be resent instead of the whole file. Each packet carries addressing information in its header."},
+ {t:"DNS",q:"What does DNS do?",o:["Encrypts web traffic","Assigns MAC addresses to devices","Translates domain names like example.com into IP addresses","Blocks unwanted websites"],a:2,e:"DNS is the internet's phone book. People remember names, but computers need IP addresses, so your device asks a DNS server to look up the address."},
+ {t:"Wi-Fi and Ethernet",q:"Compared with Wi-Fi, a wired Ethernet connection usually offers:",o:["Greater mobility around the house","More stable speeds and lower latency, because there is no radio interference","Weaker security because cables can be cut","A requirement for a router"],a:1,e:"Ethernet uses a dedicated cable, so it is generally faster and more consistent. Wi-Fi is more convenient and mobile but can be affected by distance, walls and interference."},
+ {t:"Network security",q:"What does a firewall do?",o:["Speeds up the internet connection","Stores backups of your files","Filters incoming and outgoing traffic based on security rules","Converts domain names into IP addresses"],a:2,e:"A firewall allows or blocks network traffic using rules, for example blocking unexpected connection attempts from the internet."},
+ {t:"Network security",q:"Which setup is the best choice for securing a home Wi-Fi network?",o:["No password, so guests can connect easily","WEP encryption","WPA2 or WPA3 with a long, unique passphrase","Hiding the network name and nothing else"],a:2,e:"WPA2 or WPA3 encrypts traffic and a strong passphrase makes it hard to guess. WEP is broken, and hiding the network name does not protect it."}
+];
+let qs,qi,qscore,qmiss,qdone;
+function qstart(){
+  qs=QZ.map(x=>{const o=x.o.map((text,i)=>({text,ok:i===x.a}));for(let i=o.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[o[i],o[j]]=[o[j],o[i]]}return{t:x.t,q:x.q,o,e:x.e}});
+  qi=0;qscore=0;qmiss=[];qdone=false;qshow();
+}
+function qshow(){
+  const b=$("qbox"),n=qs.length;
+  if(qi>=n){
+    const pct=Math.round(qscore/n*100),msg=pct>=90?"Excellent. You have a strong grasp of networking.":pct>=70?"Good work. Review the topics below to polish what is left.":pct>=50?"A fair start. Revisit the simulator and TCP/IP sections, then try again.":"Keep going. Explore the sections above, then restart the quiz.";
+    b.innerHTML=`<div class="qbar"><div id="qfill" style="width:100%"></div></div><h3 style="font:600 1.4rem Georgia,serif;margin:0">Your score: ${qscore} / ${n} (${pct}%)</h3><p>${msg}</p>
+      ${qmiss.length?`<p style="margin:0"><strong>Topics to review:</strong> ${[...new Set(qmiss)].join(", ")}</p>`:`<p style="margin:0"><strong>You answered every question correctly.</strong></p>`}
+      <div class="bar" style="margin-top:12px"><button class="primary" id="qrestart">Restart quiz</button></div>`;
+    $("qrestart").onclick=qstart;return;
+  }
+  const q=qs[qi];
+  b.innerHTML=`<div class="bar" style="justify-content:space-between;margin:0"><span>Question ${qi+1} of ${n}</span><span>Score: ${qscore}</span></div>
+    <div class="qbar"><div id="qfill" style="width:${qi/n*100}%"></div></div>
+    <span class="qtag">${q.t}</span><p id="qq"></p><div role="group" aria-labelledby="qq" id="qopts"></div>
+    <div id="qfb" role="status" aria-live="polite" hidden></div><div class="bar" style="margin-top:12px"><button class="primary" id="qnext" hidden>${qi===n-1?"See my score":"Next question"}</button><button id="qrestart2">Restart quiz</button></div>`;
+  $("qq").textContent=q.q;
+  q.o.forEach((o,i)=>{const bt=document.createElement("button");bt.className="qo";bt.textContent=String.fromCharCode(65+i)+". "+o.text;bt.onclick=()=>qanswer(i);$("qopts").appendChild(bt)});
+  $("qnext").onclick=()=>{qi++;qshow()};$("qrestart2").onclick=qstart;
+}
+function qanswer(i){
+  const q=qs[qi],ok=q.o[i].ok;
+  if(ok)qscore++;else qmiss.push(q.t);
+  document.querySelectorAll(".qo").forEach((bt,j)=>{bt.disabled=true;
+    if(q.o[j].ok){bt.classList.add("right");bt.textContent="✓ "+bt.textContent}
+    else if(j===i){bt.classList.add("wrong");bt.textContent="✗ "+bt.textContent}});
+  const fb=$("qfb");fb.hidden=false;fb.className=ok?"ok":"no";
+  fb.innerHTML="";const h=document.createElement("strong");h.textContent=ok?"Correct! ":"Not quite. ";fb.appendChild(h);
+  fb.appendChild(document.createTextNode(q.e));
+  $("qnext").hidden=false;$("qnext").focus();
+}
+qstart();
 reset();vreset();
 </script>
 </body>
