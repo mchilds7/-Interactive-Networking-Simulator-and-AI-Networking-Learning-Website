@@ -165,7 +165,7 @@ dt{color:var(--mute)}dd{margin:0}
   </section>
   <section class="card" style="grid-column:1/-1" aria-label="AI networking chatbot">
     <h2>Networking assistant (chatbot)</h2>
-    <p class="hint" style="margin:0 0 10px">Ask about LANs, WANs, Wi-Fi, topologies, devices, TCP/IP, IP addresses, DNS, TCP/UDP, packets, or troubleshooting. It can also look at the network you built in the simulator, for example: "Why can't PC-1 reach PC-3?"</p>
+    <p class="hint" style="margin:0 0 10px">Ask about LANs, WANs, Wi-Fi, topologies, devices, TCP/IP, IP addresses, DNS, TCP/UDP, packets, or troubleshooting, or just chat: tell it your name, ask for a joke, or say \"quiz me\". It can also look at the network you built in the simulator, for example: "Why can't PC-1 reach PC-3?"</p>
     <div id="chat" role="log" aria-live="polite" aria-label="Chat messages"></div>
     <div class="sug" id="csug" aria-label="Suggested questions"></div>
     <div class="row"><input id="cin" placeholder="Ask a networking question…" aria-label="Your question" autocomplete="off" maxlength="300"><button class="primary" id="csend">Send</button></div>
@@ -602,13 +602,65 @@ function diagnose(){
   if(!L.length)L.push(`Everything looks healthy: all ${pcs.length} computers are powered on, cabled, have unique valid IPs, and can reach each other. Try cutting a cable and ask me again.`);
   return L;
 }
-let chatLast=null;
+let chatLast=null,chatOffer=null,chatQuiz=null,chatMem={name:""};
+const rnd=a=>a[Math.floor(Math.random()*a.length)];
+const JOKES=["Why did the router go to therapy? It had too many unresolved connections.","There are 10 kinds of people in networking: those who understand binary and those who don't.","I'd tell you a TCP joke, but I'd have to wait for you to acknowledge it first. I'd tell you a UDP joke too, but you might not get it.","Why did the packet cross the network? To get to the other side, in order, hopefully.","My Wi-Fi and I broke up. We just didn't have a strong connection.","A DNS server walks into a bar. The bartender says 'The usual?' and the DNS server says 'Only if you can resolve it.'"];
+const FACTS=["The first message ever sent over ARPANET, in 1969, was meant to be 'LOGIN', but the system crashed after the first two letters, so the first message was 'LO'.","IPv4 has about 4.3 billion addresses, while IPv6 has roughly 340 undecillion, which is enough to give every grain of sand its own address many times over.","Most international internet traffic travels through undersea fibre-optic cables, not satellites.","Ethernet was invented at Xerox PARC in the 1970s by Robert Metcalfe and his colleagues.","The ping tool is named after the sound sonar makes, because it sends a pulse and listens for the echo."];
+const nm=()=>chatMem.name?", "+chatMem.name:"";
+const OFFERS=["Want an example or a simpler analogy?","Would you like me to go deeper on that?","Want me to explain how it connects to something else?","Shall I give you a quick example?"];
+function chatQuizStart(){
+  if(typeof QZ==="undefined")return null;
+  const q=rnd(QZ);chatQuiz=q;chatOffer=null;
+  return{paras:["Sure, here is one for you"+nm()+":",q.q,...q.o.map((o,i)=>"ABCD"[i]+". "+o),"Reply with A, B, C or D (or say 'skip')."]};
+}
+function chatMore(){
+  const e=chatLast;if(!e)return{paras:["What would you like to explore? Pick a topic below or ask me anything about networking."],rel:["lan","tcpip","dns","trouble"]};
+  const first=e[3].split(". ")[0].replace(/\.$/,"");
+  const ex=e[4]||`The short version is: ${first}.`;
+  const paras=[ex];if(e[6])paras.push("Try it: "+e[6]);
+  chatOffer={type:"quiz"};paras.push("Want me to quiz you on networking now?");
+  return{paras,rel:e[5].split(",")};
+}
+function smallTalk(q){
+  let m;
+  if(chatQuiz){
+    if(/^(skip|stop|quit|exit|cancel|no)\b/.test(q)){chatQuiz=null;return{paras:["No problem, quiz stopped. Ask me anything else."]}}
+    if(m=q.match(/^\(?([a-d])\)?[\s.:)!]*$|^(?:answer|option|i (?:think|pick|choose)|it'?s|is it)\s*:?\s*\(?([a-d])\b/)){
+      const L="abcd".indexOf(m[1]||m[2]),qz=chatQuiz;chatQuiz=null;chatOffer={type:"quiz"};
+      return{paras:[L===qz.a?rnd(["Correct!","Nice one, that's right!","Yes, well done!"]):"Not quite. The right answer was "+"ABCD"[qz.a]+". "+qz.o[qz.a]+".",qz.e,"Want another question?"]}}
+  }
+  if(m=q.match(/\b(?:my name is|call me|you can call me|name'?s)\s+([a-z][a-z'-]{1,20})/)){
+    chatMem.name=m[1][0].toUpperCase()+m[1].slice(1);
+    return{paras:[`Nice to meet you, ${chatMem.name}! I'll remember that for this chat. What would you like to talk about?`],rel:["lan","tcpip","simhow"]}}
+  if(/(what'?s|what is|do you (know|remember)) my name/.test(q))return{paras:[chatMem.name?`Your name is ${chatMem.name}.`:"You haven't told me yet. You can say 'my name is ...' and I'll remember it."]};
+  if(/^(hi|hello|hey|yo|hiya|sup|good (morning|afternoon|evening))\b/.test(q))return{paras:[rnd([`Hello${nm()}!`,`Hey${nm()}!`,`Hi${nm()}, good to see you!`])+" I'm the Networking Assistant. We can chat, or I can explain networking, check your simulator, or help you troubleshoot. What's on your mind?"],rel:["lan","tcpip","simhow"]};
+  if(/how are you|how'?s it going|how do you feel|you ok\b|what'?s up/.test(q))return{paras:[rnd(["I'm doing well, thanks for asking! Zero packet loss today.","Running smoothly, with low latency and a full cache of networking facts.","Pretty good! Always happy when someone wants to talk networking."])+" How about you?"]};
+  if(/what('?s| is) your name|who are you|what should i call you/.test(q))return{paras:["I'm the Networking Assistant. You can call me Net if you like! I live on this page and I'm here to help with networking."]};
+  if(/are you (an? )?(real )?(ai|bot|robot|human|person|chatgpt|gpt|claude|alive)|who (made|built|created|programmed) you|how do you work|what are you\b/.test(q))return{paras:["I'm a chatbot built into this web page. I'm not a large AI model like ChatGPT. I run entirely in your browser, using a library of networking knowledge, some pattern matching, and a short memory of our chat, plus I can look at the network in your simulator. That means I'm best at networking, and I can chat a little, but I can't talk about everything."]};
+  if(/\b(joke|funny|make me laugh|humou?r)\b/.test(q))return{paras:[rnd(JOKES)],rel:["tcp","udp","dns"]};
+  if(/fun fact|did you know|tell me something|something interesting|random fact|trivia/.test(q))return{paras:["Here's a fun one: "+rnd(FACTS)]};
+  if(/quiz me|test me|ask me (a )?question|give me a question|another (one|question)/.test(q)){const r=chatQuizStart();if(r)return r}
+  if(/favou?rite|best (protocol|device|topology)|what do you (think|like|prefer)|your opinion/.test(q))return{paras:["If I had to pick a favourite, it would be DNS. Almost nobody notices it, yet every time you open a website it quietly turns a name into an address in a few milliseconds. Honourable mention goes to the humble switch, which does so much work with so little fuss. What about you, do you have a favourite?"],rel:["dns","switch"]};
+  if(/(i'?m|i am|feel(ing)?|this is)\s+(so |really |very |a bit )?(bored|tired|stressed|sad|confused|lost|overwhelmed|frustrated|struggling|stuck)|don'?t (get|understand)|too (hard|difficult|confusing)|i give up|makes no sense/.test(q))return{paras:["That's completely normal. Networking has a lot of new terms at once, and almost everyone finds it confusing at first. Let's take it one small piece at a time. Tell me which part feels fuzzy and I'll explain it in simpler words with an analogy, or I can quiz you gently to find what to review."],rel:["network","lan","ip","tcpip"]};
+  if(/\b(you'?re|you are|u r|that was|this is)\s+(so |really |very )?(great|awesome|amazing|smart|helpful|cool|good|nice|the best)|good (job|bot)|well done|nice one|love (this|it|you)/.test(q))return{paras:[rnd(["Thank you, that's kind of you to say!","Thanks! That made my day.","Glad I could help!"])+" What else would you like to explore?"]};
+  if(/\b(stupid|dumb|useless|bad bot|terrible|hate you|worthless)\b/.test(q))return{paras:["Sorry I wasn't more helpful. I'm a fairly small chatbot, so I miss things sometimes. Try asking in a different way, or pick one of the topics below and I'll do my best."],rel:["lan","router","tcpip","dns"]};
+  if(/\b(bye|goodbye|see you|see ya|good night|gotta go|talk later)\b/.test(q))return{paras:[`Goodbye${nm()}! Good luck with your project, and come back anytime.`]};
+  if(/can (you|we) (chat|talk|just talk)|let'?s (chat|talk)|just chat|talk to me/.test(q))return{paras:["Of course! We can just chat. I know networking best, so I might steer us back to it, but go ahead. How's your project going?"]};
+  if(/^(yes|yeah|yep|yup|sure|ok(ay)?|please|go on|go ahead|why not|definitely|of course)\b/.test(q)){
+    if(chatOffer&&chatOffer.type==="quiz"){chatOffer=null;const r=chatQuizStart();if(r)return r}
+    if(chatOffer){chatOffer=null;return chatMore()}
+    return{paras:["Great! What would you like to explore?"],rel:["lan","tcpip","dns","trouble"]}}
+  if(/^(no|nope|nah|not now|no thanks|no thank you)\b/.test(q)){chatOffer=null;return{paras:["No problem. Ask me something else whenever you like."]}}
+  if(/\b(eli5|like i'?m (5|five)|simpler|in simple terms|easier)\b/.test(q)&&chatLast)return chatMore();
+  if(/weather|football|soccer|basketball|movie|music|recipe|homework|sports|politic|stock|bitcoin|crypto/.test(q))return{paras:["That's a bit outside my networking toolbox, so I can't help much there. Though every web page about it still reaches you as packets, so I can explain how! Want to hear how a page travels to your screen?"],rel:["packets","http","dns"]};
+  return null;
+}
 function chatAnswer(raw){
   const q=raw.toLowerCase().replace(/[\u2018\u2019]/g,"'").trim();
   if(!q)return{paras:["Type a networking question and I will do my best to explain it."]};
-  if(/^(hi|hello|hey|good (morning|afternoon|evening))\b/.test(q))return{paras:["Hello! I'm the Networking Assistant. I can explain networking concepts, help you use the simulator, and help troubleshoot connection problems. What would you like to know?"],rel:["lan","tcpip","simhow"]};
-  if(/\b(thanks|thank you|thx)\b/.test(q))return{paras:["You're welcome! Ask me anything else about networking."]};
-  if(/^(help|what can you do|who are you)\??$/.test(q))return{paras:["I can explain LAN, WAN, Wi-Fi and Ethernet, topologies, networking devices, TCP/IP layers and protocols, IP addresses, DNS, TCP, UDP and packets. I can also explain how to use the simulator, check your simulator for problems, and walk through basic troubleshooting."],rel:["topology","tcpip","simhow","trouble"]};
+  if(/\b(thanks|thank you|thx|cheers)\b/.test(q))return{paras:[rnd(["You're welcome"+nm()+"!","Anytime"+nm()+"!","Happy to help!"])+" Ask me anything else, or say 'quiz me' if you want to test yourself."]};
+  if(/^(help|what can you do)\??$/.test(q))return{paras:["I can chat, and I can explain LAN, WAN, Wi-Fi and Ethernet, topologies, networking devices, TCP/IP layers and protocols, IP addresses, DNS, TCP, UDP and packets. I can also tell you how to use the simulator, check your simulator for problems, troubleshoot connection problems, tell a joke or a fun fact, and quiz you. Just ask!"],rel:["topology","tcpip","simhow","trouble"]};
+  const st=smallTalk(q);if(st)return st;
   if(/diagnos|check (my|the) (network|simulator)|(my|the) (network|simulator).{0,30}(not|n't|fail|broken|problem|work)|why (can'?t|cannot|won'?t|doesn'?t|does not|did|is).{0,40}(reach|send|ping|connect|fail|work)|\b(pc|switch|router)-?\d\b/.test(q)){
     chatLast=null;return{paras:["Here is what I see in your simulator right now:",...diagnose().map(x=>"• "+x)],rel:["simsend","simfail","trouble"]}}
   const notes=ipNotes(raw);
@@ -618,15 +670,17 @@ function chatAnswer(raw){
     if(notes.length)return{paras:notes};
     if(chatLast&&/\b(more|example|explain|elaborate|why|simpl\w*|what do you mean|detail)\b/.test(q)){
       const e=chatLast,ex=e[4]||`In short: ${e[3].split(". ")[0]}.`;return{paras:[`More on ${e[1]}: ${ex}`,...(e[6]?[e[6]]:[])],rel:e[5].split(",")}}
-    return{paras:["I'm not sure I understood that. I can explain networking topics such as LANs and WANs, topologies, routers and switches, TCP/IP layers, IP addresses, DNS, TCP vs UDP and packets, and I can help troubleshoot or use the simulator. Try rephrasing, or pick a topic below."],rel:["lan","router","tcpip","dns","trouble","simhow"]};
+    return{paras:[rnd(["Hmm, I'm not sure I caught that one.","I'm not certain what you mean there.","That one is beyond what I know."])+" I'm strongest on networking: LANs and WANs, topologies, routers and switches, TCP/IP layers, IP addresses, DNS, TCP vs UDP, packets, the simulator and troubleshooting. Could you rephrase it, or tell me a bit more? We can also just chat, or I can tell you a joke or quiz you."],rel:["lan","router","tcpip","dns","trouble","simhow"]};
   }
   const pick=[sc[0]];
   if(sc[1]&&(cmp||sc[1].s>=sc[0].s*0.9))pick.push(sc[1]);
   const paras=[...notes];
-  pick.forEach((x,n)=>{const e=KB[x.i];paras.push(pick.length>1?`${e[1]}: ${e[3]}`:e[3]);if(pick.length===1&&e[4]&&!notes.length)paras.push(e[4])});
+  const intro=!notes.length&&pick.length===1?rnd(["Good question! ","Sure! ","Happy to explain. ","Here's how I'd put it: ","",""]):"";
+  pick.forEach((x,n)=>{const e=KB[x.i];paras.push(pick.length>1?`${e[1]}: ${e[3]}`:(n===0?intro:"")+e[3]);if(pick.length===1&&e[4]&&!notes.length)paras.push(e[4])});
   if(pick.length>1)paras.push("Key point: compare what each one does, which layer it works at, and when you would choose one over the other.");
   const first=KB[pick[0].i];chatLast=first;
   const sim=pick.map(x=>KB[x.i][6]).filter(Boolean)[0];if(sim&&!notes.length)paras.push("Try it: "+sim);
+  if(!notes.length){chatOffer={type:"more"};paras.push(rnd(OFFERS))}
   const rel=[...new Set(pick.flatMap(x=>KB[x.i][5].split(",")))].filter(id=>!pick.some(x=>KB[x.i][0]===id)).slice(0,4);
   return{paras,rel};
 }
@@ -645,17 +699,17 @@ async function cask(t){
   cmsg("u",{paras:[t]});const tmp=cmsg("b",{paras:["Thinking…"]});
   let a=null;
   if(CHAT_API_URL){try{const r=await fetch(CHAT_API_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({question:t})});const j=await r.json();if(j&&j.answer)a={paras:[String(j.answer)]}}catch(e){}}
-  await new Promise(r=>setTimeout(r,450));
+  await new Promise(r=>setTimeout(r,350+Math.random()*450));
   if(!a)a=chatAnswer(t);
   tmp.remove();cmsg("b",a);
 }
 function csend(){const i=$("cin");const t=i.value;i.value="";cask(t)}
 $("csend").onclick=csend;$("cin").onkeydown=e=>{if(e.key==="Enter")csend()};
-$("cclear").onclick=()=>{chatBox.innerHTML="";chatLast=null;cmsg("b",{paras:["Chat cleared. What would you like to know about networking?"]})};
+$("cclear").onclick=()=>{chatBox.innerHTML="";chatLast=null;chatOffer=null;chatQuiz=null;chatMem.name="";cmsg("b",{paras:["Chat cleared. What would you like to know about networking?"]})};
 const TESTQ=["What is the difference between a LAN and a WAN?","How does a router differ from a switch?","What happens during the TCP three-way handshake?","How does DNS work?","Is 192.168.1.10 a private IP address?","Why can't PC-1 reach PC-3 in my simulator?"];
 $("ctest").onclick=async()=>{$("ctest").disabled=true;for(const q of TESTQ)await cask(q);$("ctest").disabled=false};
 $("csug").innerHTML="";
-["What is a LAN?","What are network topologies?","TCP vs UDP","What is the TCP/IP model?","How do I use the simulator?","My internet is slow"].forEach(q=>{const b=document.createElement("button");b.textContent=q;b.onclick=()=>cask(q);$("csug").appendChild(b)});
+["What is a LAN?","TCP vs UDP","How do I use the simulator?","My internet is slow","Tell me a joke","Quiz me"].forEach(q=>{const b=document.createElement("button");b.textContent=q;b.onclick=()=>cask(q);$("csug").appendChild(b)});
 cmsg("b",{paras:["Hi! I'm the Networking Assistant. Ask me about LANs, WANs, Wi-Fi, topologies, routers and switches, the TCP/IP layers, IP addresses, DNS, TCP and UDP, packets or troubleshooting. I can also check the network in your simulator. Try a suggestion below or type your own question."]});
 reset();vreset();
 </script>
