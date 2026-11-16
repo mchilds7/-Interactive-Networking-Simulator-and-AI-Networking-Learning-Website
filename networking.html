@@ -3,30 +3,51 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Networking Lab – Interactive Network Simulator</title>
+<title>Networking Lab – Interactive Networking Learning Website</title>
 <style>
-:root{--bg:#eef3f1;--panel:#fff;--ink:#17302b;--mute:#5d726d;--line:#c9d8d3;--teal:#0f766e;--amber:#b87503;--red:#b8321f;--green:#1b7a3d;--on:#fff}
-@media (prefers-color-scheme:dark){:root{--bg:#10201d;--panel:#182b27;--ink:#e6f0ed;--mute:#9bb2ac;--line:#2f4742;--teal:#3fc0b3;--amber:#e3a13a;--red:#ef7a66;--green:#5fcf84;--on:#10201d}}
+:root{--bg:#eef3f1;--panel:#fff;--ink:#17302b;--mute:#5d726d;--line:#c9d8d3;--teal:#0f766e;--amber:#b87503;--red:#b8321f;--green:#1b7a3d;--on:#fff;--h1:#0b4f4a;--h2:#0f766e}
+@media (prefers-color-scheme:dark){:root{--bg:#10201d;--panel:#182b27;--ink:#e6f0ed;--mute:#9bb2ac;--line:#2f4742;--teal:#3fc0b3;--amber:#e3a13a;--red:#ef7a66;--green:#5fcf84;--on:#10201d;--h1:#0a2926;--h2:#0e4a44}}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 "Segoe UI",system-ui,sans-serif}
-header{padding:28px 24px 8px;max-width:1200px;margin:auto}
-h1{margin:0;font:700 2rem/1.2 Georgia,serif}
-header p{margin:6px 0 0;color:var(--mute);max-width:70ch}
-main{max-width:1200px;margin:auto;padding:16px 24px 40px;display:grid;grid-template-columns:1fr 320px;gap:16px}
-@media (max-width:900px){main{grid-template-columns:1fr}}
-.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px}
-h2{font:600 1.05rem Georgia,serif;margin:0 0 8px}
+html{scroll-behavior:smooth;scroll-padding-top:70px}
+.skip{position:absolute;left:-999px;top:8px;background:var(--teal);color:var(--on);padding:8px 14px;border-radius:6px;z-index:100}.skip:focus{left:12px}
+.hero{background:linear-gradient(135deg,var(--h1),var(--h2));color:#fff;padding:46px 24px 40px}
+.hero .in{max-width:1200px;margin:auto}
+.hero .tag{display:inline-block;font-size:.78rem;letter-spacing:.07em;text-transform:uppercase;background:rgba(255,255,255,.16);padding:4px 14px;border-radius:99px;margin-bottom:14px}
+.hero h1{margin:0;font:700 2.6rem/1.1 Georgia,serif}
+.hero p{margin:12px 0 0;max-width:64ch;color:#e3f3f0;font-size:1.08rem}
+nav.top{position:sticky;top:0;z-index:50;background:var(--panel);border-bottom:1px solid var(--line);box-shadow:0 2px 8px rgba(0,0,0,.07)}
+nav.top ul{list-style:none;margin:auto;padding:8px 24px;max-width:1200px;display:flex;gap:6px;overflow-x:auto}
+nav.top a{display:block;white-space:nowrap;padding:7px 16px;border-radius:99px;color:var(--ink);text-decoration:none;font-size:.93rem;font-weight:500}
+nav.top a:hover{background:var(--bg)}nav.top a.act{background:var(--teal);color:var(--on)}
+main{max-width:1200px;margin:auto;padding:4px 24px 40px}
+.comp{margin-top:46px;scroll-margin-top:64px}
+.comp-head{display:flex;gap:14px;align-items:center;margin-bottom:16px}
+.num{flex:none;width:46px;height:46px;border-radius:50%;background:var(--teal);color:var(--on);display:grid;place-items:center;font:700 1.25rem Georgia,serif}
+.comp-head h2{margin:0;font:700 1.65rem/1.2 Georgia,serif}.comp-head p{margin:2px 0 0;color:var(--mute)}
+.c1grid{display:grid;grid-template-columns:1fr 330px;gap:16px}
+.c1grid aside{display:grid;gap:16px;align-content:start}
+@media (max-width:900px){.c1grid{grid-template-columns:1fr}.hero h1{font-size:2rem}.comp-head h2{font-size:1.35rem}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+h3{font:600 1.08rem Georgia,serif;margin:0 0 10px}
+hr.sep{border:0;border-top:1px solid var(--line);margin:18px 0 14px}
+footer{border-top:1px solid var(--line);padding:26px 24px;text-align:center;color:var(--mute);font-size:.9rem}
+footer strong{color:var(--ink)}
+#totop{position:fixed;right:18px;bottom:18px;width:44px;height:44px;border-radius:50%;padding:0;font-size:1.2rem;box-shadow:0 2px 8px rgba(0,0,0,.2);opacity:0;pointer-events:none;transition:opacity .2s}
+#totop.show{opacity:1;pointer-events:auto}
 .bar{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
 button,select,input{font:inherit;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:6px 10px}
-button{cursor:pointer}
-button:hover{border-color:var(--teal)}
+button{cursor:pointer;transition:background .15s,border-color .15s,filter .15s}
+button:hover{border-color:var(--teal);background:var(--bg)}
+button.primary:hover,button.on:hover{background:var(--teal);filter:brightness(1.1)}
+button:disabled{opacity:.5;cursor:not-allowed}
 button.on,button.primary{background:var(--teal);border-color:var(--teal);color:var(--on)}
 button.danger{color:var(--red)}
 :focus-visible{outline:3px solid var(--amber);outline-offset:2px}
 svg{width:100%;height:auto;display:block;background:var(--bg);border:1px dashed var(--line);border-radius:8px;touch-action:none}
 .dev{cursor:grab}
-.dev text{fill:var(--ink);font-size:13px;text-anchor:middle;pointer-events:none}
-.dev .ip{fill:var(--mute);font-size:11px}
+.dev text{fill:var(--ink);font-size:17px;font-weight:600;text-anchor:middle;pointer-events:none}
+.dev .ip{fill:var(--mute);font-size:14px;font-weight:400}
 .shape{fill:var(--panel);stroke:var(--teal);stroke-width:2.5}
 .dev.sel .shape{stroke:var(--amber);stroke-width:4}
 .dev.off .shape{stroke:var(--red);stroke-dasharray:5 3;opacity:.6}
@@ -87,14 +108,26 @@ dt{color:var(--mute)}dd{margin:0}
 </style>
 </head>
 <body>
-<header>
-  <h1>Networking Lab: Interactive Network Simulator</h1>
-  <p style="font-size:.8rem;margin:0 0 4px;color:var(--mute)">Version: Components 1 to 5</p>
-  <p>Build a small network, cut a cable, change an address, and watch what happens when one computer sends data to another.</p>
+<a class="skip" href="#main">Skip to content</a>
+<header class="hero">
+  <div class="in">
+    <span class="tag">Assignment 11 · Chapter 9 · Networking</span>
+    <h1>Networking Lab</h1>
+    <p>An interactive place to learn how computers connect and communicate. Build a network, watch packets travel, explore the TCP/IP model, test yourself, and ask the assistant.</p>
+  </div>
 </header>
-<main>
+<nav class="top" aria-label="Page sections"><ul>
+  <li><a href="#simulator">1 · Simulator</a></li>
+  <li><a href="#packets">2 · Packets</a></li>
+  <li><a href="#tcpip">3 · TCP/IP model</a></li>
+  <li><a href="#quiz">4 · Quiz</a></li>
+  <li><a href="#assistant">5 · Chatbot</a></li>
+</ul></nav>
+<main id="main">
+<div class="comp" id="simulator"><div class="comp-head"><span class="num" aria-hidden="true">1</span><div><h2>Interactive Network Simulator</h2><p>Connect devices, send data between computers, and see what happens when a cable is cut or a device goes offline.</p></div></div>
+<div class="c1grid">
   <section class="card" aria-label="Network canvas">
-    <h2>Network topology</h2>
+    <h3>Network topology</h3>
     <div class="bar">
       <button id="bConnect" aria-pressed="false">Connect devices</button>
       <select id="addType" aria-label="Device type"><option value="pc">Computer</option><option value="switch">Switch</option><option value="router">Router</option></select>
@@ -106,25 +139,26 @@ dt{color:var(--mute)}dd{margin:0}
     <p class="hint" id="modeHint"></p>
   </section>
 
-  <aside style="display:grid;gap:16px;align-content:start">
+  <aside>
     <section class="card" aria-live="polite">
-      <h2>Selected device</h2>
+      <h3>Selected device</h3>
       <div id="info"><p class="hint">Click a device to see its details.</p></div>
     </section>
     <section class="card">
-      <h2>Send data</h2>
+      <h3>Send data</h3>
       <div class="row"><label for="src">From</label><select id="src"></select></div>
       <div class="row"><label for="dst">To</label><select id="dst"></select></div>
       <button class="primary" id="bSend">Send packet</button>
       <div id="result" role="status">No packet sent yet.</div>
     </section>
     <section class="card">
-      <h2>Event log</h2>
+      <h3>Event log</h3>
       <ul id="log"></ul>
     </section>
   </aside>
-  <section class="card" style="grid-column:1/-1" aria-label="Packet visualization">
-    <h2>Packet visualization</h2>
+</div></div>
+<div class="comp" id="packets"><div class="comp-head"><span class="num" aria-hidden="true">2</span><div><h2>Network Packet Visualization</h2><p>Watch a message turn into packets, cross the network, and get rebuilt at its destination.</p></div></div>
+  <section class="card" aria-label="Packet visualization">
     <p class="hint" style="margin:0 0 10px">Pick two computers and watch a message become packets, cross the network, and get rebuilt. It uses the network you built above, so cutting a cable there changes the route here.</p>
     <div class="bar">
       <label>From <select id="vsrc"></select></label>
@@ -139,39 +173,42 @@ dt{color:var(--mute)}dd{margin:0}
       <ol id="vsteps"></ol>
       <div id="vexp" role="status" aria-live="polite"></div>
     </div>
-  </section>
-  <section class="card" style="grid-column:1/-1" aria-label="TCP/IP model">
-    <h2>Interactive TCP/IP model</h2>
+  </section></div>
+<div class="comp" id="tcpip"><div class="comp-head"><span class="num" aria-hidden="true">3</span><div><h2>Interactive TCP/IP Model</h2><p>Explore the four layers, see how data moves through them, and follow what happens when you visit a website.</p></div></div>
+  <section class="card" aria-label="TCP/IP model">
     <p class="hint" style="margin:0 0 10px">Click a layer to see what it does. Use the buttons below to watch data move down the layers on the sending computer and back up on the receiving one.</p>
     <div class="t3grid">
       <div id="t3stack" role="group" aria-label="TCP/IP layers"></div>
       <div id="t3detail" aria-live="polite"></div>
     </div>
-    <h2 style="margin-top:16px">How data moves through the layers</h2>
+    <hr class="sep"><h3>How data moves through the layers</h3>
     <div class="bar">
       <button class="primary" id="t3down">Send: down the layers</button>
       <button id="t3up">Receive: up the layers</button>
     </div>
     <p class="hint" id="t3msg" style="margin:0"></p>
+    <p class="hint" style="margin:6px 0 0">What the data looks like at the selected layer:</p>
     <div class="enc" id="t3enc" aria-label="What the data looks like at the selected layer"></div>
-    <h2 style="margin-top:16px">Example: visiting a website</h2>
+    <hr class="sep"><h3>Example: visiting a website</h3>
     <p class="hint" style="margin:0 0 8px">What happens when you type <strong>https://example.com</strong> into your browser.</p>
     <div class="bar"><button id="t3prev">Previous</button><button class="primary" id="t3next">Next step</button><span class="hint" id="t3count" style="align-self:center;margin:0"></span></div>
     <div id="t3web" aria-live="polite"></div>
-  </section>
-  <section class="card" style="grid-column:1/-1" aria-label="Networking quiz">
-    <h2>Networking quiz</h2>
+  </section></div>
+<div class="comp" id="quiz"><div class="comp-head"><span class="num" aria-hidden="true">4</span><div><h2>Networking Quiz</h2><p>Twelve multiple-choice questions with instant feedback and an explanation for every answer.</p></div></div>
+  <section class="card" aria-label="Networking quiz">
     <div id="qbox"></div>
-  </section>
-  <section class="card" style="grid-column:1/-1" aria-label="AI networking chatbot">
-    <h2>Networking assistant (chatbot)</h2>
-    <p class="hint" style="margin:0 0 10px">Ask about LANs, WANs, Wi-Fi, topologies, devices, TCP/IP, IP addresses, DNS, TCP/UDP, packets, or troubleshooting, or just chat: tell it your name, ask for a joke, or say \"quiz me\". It can also look at the network you built in the simulator, for example: "Why can't PC-1 reach PC-3?"</p>
+  </section></div>
+<div class="comp" id="assistant"><div class="comp-head"><span class="num" aria-hidden="true">5</span><div><h2>AI Networking Chatbot</h2><p>Ask a question, get help with the simulator, troubleshoot a problem, or just chat.</p></div></div>
+  <section class="card" aria-label="AI networking chatbot">
+    <p class="hint" style="margin:0 0 10px">Ask about LANs, WANs, Wi-Fi, topologies, devices, TCP/IP, IP addresses, DNS, TCP/UDP, packets, or troubleshooting, or just chat: tell it your name, ask for a joke, or say “quiz me”. It can also look at the network you built in the simulator, for example: "Why can't PC-1 reach PC-3?"</p>
     <div id="chat" role="log" aria-live="polite" aria-label="Chat messages"></div>
     <div class="sug" id="csug" aria-label="Suggested questions"></div>
     <div class="row"><input id="cin" placeholder="Ask a networking question…" aria-label="Your question" autocomplete="off" maxlength="300"><button class="primary" id="csend">Send</button></div>
     <div class="bar" style="margin-top:8px"><button id="ctest">Run test questions</button><button id="cclear">Clear chat</button></div>
-  </section>
+  </section></div>
 </main>
+<footer><strong>Networking Lab</strong> · Assignment 11, Chapter 9: Networking<br>Built with plain HTML, CSS and JavaScript. Everything runs in your browser and no personal data is collected.</footer>
+<button id="totop" aria-label="Back to top" title="Back to top">↑</button>
 
 <script>
 const NS="http://www.w3.org/2000/svg";
@@ -205,6 +242,7 @@ function draw(){
   });
   devs.forEach(d=>{
     const g=el("g",{class:"dev"+(sel===d.id?" sel":"")+(d.on?"":" off"),transform:`translate(${d.x},${d.y})`,tabindex:0,role:"button","aria-label":`${d.name}, ${d.type}`});
+    el("rect",{x:-50,y:-34,width:100,height:70,fill:"transparent"},g);
     if(d.type==="pc"){el("rect",{x:-30,y:-24,width:60,height:40,rx:4,class:"shape"},g);el("rect",{x:-14,y:18,width:28,height:6,class:"shape"},g)}
     else if(d.type==="switch"){el("rect",{x:-46,y:-16,width:92,height:32,rx:4,class:"shape"},g);[-30,-15,0,15,30].forEach(x=>el("rect",{x:x-4,y:-6,width:8,height:10,fill:"var(--teal)"},g))}
     else{el("circle",{r:28,class:"shape"},g);el("path",{d:"M-14 0H14M8 -6L14 0L8 6M14 -10L-14 -10M-8 -16L-14 -10L-8 -4",fill:"none",stroke:"var(--teal)","stroke-width":2.5},g)}
@@ -711,6 +749,15 @@ $("ctest").onclick=async()=>{$("ctest").disabled=true;for(const q of TESTQ)await
 $("csug").innerHTML="";
 ["What is a LAN?","TCP vs UDP","How do I use the simulator?","My internet is slow","Tell me a joke","Quiz me"].forEach(q=>{const b=document.createElement("button");b.textContent=q;b.onclick=()=>cask(q);$("csug").appendChild(b)});
 cmsg("b",{paras:["Hi! I'm the Networking Assistant. Ask me about LANs, WANs, Wi-Fi, topologies, routers and switches, the TCP/IP layers, IP addresses, DNS, TCP and UDP, packets or troubleshooting. I can also check the network in your simulator. Try a suggestion below or type your own question."]});
+/* ---------- Page navigation ---------- */
+(function(){
+  const links=[...document.querySelectorAll("nav.top a")],secs=links.map(a=>document.querySelector(a.getAttribute("href")));
+  function upd(){let cur=-1;secs.forEach((e,i)=>{if(e.getBoundingClientRect().top<120)cur=i});
+    links.forEach((a,i)=>{a.classList.toggle("act",i===cur);if(i===cur)a.setAttribute("aria-current","true");else a.removeAttribute("aria-current")});
+    $("totop").classList.toggle("show",scrollY>500)}
+  addEventListener("scroll",upd,{passive:true});upd();
+  $("totop").onclick=()=>scrollTo({top:0});
+})();
 reset();vreset();
 </script>
 </body>
